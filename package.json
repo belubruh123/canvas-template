@@ -1,0 +1,16 @@
+{
+  "name": "codespaces-blank",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "parcel build ./src/index.html"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "build": "^0.1.4",
+    "parcel": "^2.14.4"
+  }
+}

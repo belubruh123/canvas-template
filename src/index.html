@@ -1,0 +1,46 @@
+<style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      background: black;
+    }
+    #mousePos {
+      position: absolute;
+      top: 5px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      font-size: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    #hoverInfo {
+      position: absolute;
+      top: 40px;
+      left: 10px;
+      color: #00ffcc;
+      font-family: monospace;
+      font-size: 13px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 10px;
+      border-radius: 4px;
+      white-space: pre-line;
+      display: none;
+    }
+  </style>
+  
+  <div id="mousePos">x: 0, y: 0</div>
+  <canvas
+    id="canvasEl"
+    style="display: block; width: 100vw; height: 100vh"
+  ></canvas>
+  <div id="hoverInfo"></div>
+  
+ 
+  
