@@ -1,5 +1,8 @@
 name: Generate and Deploy JSDoc
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
