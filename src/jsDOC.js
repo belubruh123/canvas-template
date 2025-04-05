@@ -1,5 +1,16 @@
+ /**
+ * @description
+ * This is the home or introductory section of the documentation.
+ * Here you can find all the possible things you can do with the canvas engine.
+ *
+ * The functions below are part of the utility module.
+ */
+
+
+
 
  
+
  
   /**  This will open the debug menu. */
   let debug = true;
@@ -8,10 +19,10 @@
 
   let backgroundImg = null;
 
-  /* The above code is defining an object named `cursor` with properties `x`, `y`, `isDown`, `left`,
+  /** 
+   *  The above code is defining an object named `cursor` with properties `x`, `y`, `isDown`, `left`,
   and `right`. The `x` and `y` properties are initialized to 0, `isDown` is initialized to false,
-  and `left` and `right` are initialized to false as well. This object can be used to store
-  information about the cursor's position and state in a JavaScript program. */
+  and `left` and `right` are initialized to false as well. This object can be used to store and be access with cursor.x for example. */
   const cursor = {
     x: 0,
     y: 0,
@@ -24,11 +35,14 @@
   // Track previous key states
   const prevKeys = {};
 
-  /* The above JavaScript code defines a function called `setBackground` that takes a `src` parameter.
+  /**
+   * The above JavaScript code defines a function called `setBackground` that takes a `src` parameter.
   If the `src` parameter is falsy (e.g., null, undefined, empty string), the function sets the
   `backgroundImg` variable to null and changes the background color of the document body to black.
-  If the `src` parameter is truthy, the function does not specify any action. The code also contains
-  a placeholder ` */
+  If the `src` parameter is truthy, the function does not specify any action.
+   * @param {*} src The path to image source
+   * @return {*} 
+   */
   function setBackground(src) {
     if (!src) {
       backgroundImg = null;
@@ -69,13 +83,19 @@
   }
 
   // Sprite class, inheriting from Drawable
-  class Sprite extends Drawable {
+/**
+ *
+ *
+ * @class Sprite This controls everything related to object on canva that moves.
+ * @extends {Drawable}
+ */
+class Sprite extends Drawable {
     constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
       super(x, y);
       this.color = color;
       this.prevX = this.x;
       this.prevY = this.y;
-      /**  The above code is setting the value of the property `size` to 30 in the global context. */
+      /**  Sprite The above code is setting the value of the property `size` to 30 in the global context. */
       this.size = 30;
       /**  The above code is setting the value of the property "speed" to 5 in the global scope. */
       this.speed = 5;
@@ -244,7 +264,7 @@
      */
     isTouching(other) {
   // Use custom hitboxPolygon if both sprites have one
-  if (this.hitboxPolygon && other.hitboxPolygon) {
+  if (this.hitboxPolygon && other.hitboxPolygon) {a
     // Translate each sprite's polygon to world coordinates.
     const poly1 = this.hitboxPolygon.map(vertex => ({
       x: vertex.x * this.scale + this.x,
