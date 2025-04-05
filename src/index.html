@@ -39,13 +39,20 @@
 <div id="hoverInfo"></div>
 
 <script>
-  
+ 
+ 
+ 
+  /**  This will open the debug menu. */
   let debug = true;
   const canvasEl = document.getElementById('canvasEl');
   const ctx = canvasEl.getContext('2d');
 
   let backgroundImg = null;
 
+  /* The above code is defining an object named `cursor` with properties `x`, `y`, `isDown`, `left`,
+  and `right`. The `x` and `y` properties are initialized to 0, `isDown` is initialized to false,
+  and `left` and `right` are initialized to false as well. This object can be used to store
+  information about the cursor's position and state in a JavaScript program. */
   const cursor = {
     x: 0,
     y: 0,
@@ -58,6 +65,11 @@
   // Track previous key states
   const prevKeys = {};
 
+  /* The above JavaScript code defines a function called `setBackground` that takes a `src` parameter.
+  If the `src` parameter is falsy (e.g., null, undefined, empty string), the function sets the
+  `backgroundImg` variable to null and changes the background color of the document body to black.
+  If the `src` parameter is truthy, the function does not specify any action. The code also contains
+  a placeholder ` */
   function setBackground(src) {
     if (!src) {
       backgroundImg = null;
@@ -104,7 +116,9 @@
       this.color = color;
       this.prevX = this.x;
       this.prevY = this.y;
+      /**  The above code is setting the value of the property `size` to 30 in the global context. */
       this.size = 30;
+      /**  The above code is setting the value of the property "speed" to 5 in the global scope. */
       this.speed = 5;
       this.border = false;
       this.touching = [];
@@ -117,9 +131,12 @@
       this.loadedCostumes = [];
       this.events = {};
       this.useOriginalSize = true;
+      /**  The above code is setting the value of the property `scale` to 1.0 in the global context. */
       this.scale = 1.0; // New scale property, defaults to 100%
       this.controls = null;
+      /**  The above code is setting the value of the property `gravity` to 0 in the global scope. */
       this.gravity = 0;
+      /** The above code is setting the value of the `hitbox` property to `false`. */
       this.hitbox = false;
       // Add pen-related properties
       this.penDown = false;          // Tracks if the pen is down
@@ -146,19 +163,50 @@
       this.events[eventName].push(callback);
     }
 
-    onTouch(target, callback) {
+ 
+   /**
+    * The onTouch function adds a target and callback to the touchCallbacks array.
+    * @param target - The `target` parameter in the `onTouch` function represents the element or object
+    * that the touch event will be applied to. It could be a DOM element, a specific area on the
+    * screen, or any other target that can receive touch input.
+    * @param callback - The `callback` parameter in the `onTouch` function is a function that will be
+    * executed when a touch event occurs on the specified `target`.
+    */
+   onTouch(target, callback) {
       this.touchCallbacks.push({ target, callback });
     }
 
+    /**
+     * The `onTouchOnce` function adds a target and callback to an array of touch event callbacks.
+     * @param target - The `target` parameter in the `onTouchOnce` function refers to the element or
+     * object on which the touch event will be listened for. This could be a DOM element in a web
+     * application, a UI element in a mobile app, or any other interactive component that can receive
+     * touch input.
+     * @param callback - The `callback` parameter is a function that will be executed when the `target`
+     * is touched once.
+     */
     onTouchOnce(target, callback) {
       this.touchOnceCallbacks.push({ target, callback });
     }
 
+    /**
+     * The onTouchEnd function in JavaScript adds a target and callback to an array of touch end
+     * callbacks.
+     * @param target - The `target` parameter in the `onTouchEnd` function refers to the element or
+     * object on which the touch event is expected to end. This could be a DOM element, a specific
+     * component in a UI framework, or any other target that is relevant to the touch event.
+     * @param callback - The `callback` parameter is a function that will be executed when the touch
+     * end event occurs on the specified `target`.
+     */
     onTouchEnd(target, callback) {
       this.touchEndCallbacks.push({ target, callback });
     }
 
     // Start drawing by setting pen down
+    /**
+     * The `startDrawing` function initializes a new drawing path at the current position if the pen is
+     * not already down.
+     */
     startDrawing() {
       if (!this.penDown) {
         this.penDown = true;
@@ -168,12 +216,19 @@
     }
 
     // Stop drawing by lifting the pen
+    /**
+     * The function `stopDrawing()` ends the current drawing path by setting `penDown` to false and
+     * `currentPath` to null.
+     */
     stopDrawing() {
       this.penDown = false;
       this.currentPath = null; // End the current path
     }
 
     // Clear all drawn trails for this sprite
+   /**
+    * The clearPen function resets the pen trails and current path in a JavaScript program.
+    */
     clearPen() {
       this.penTrails = [];
       this.currentPath = null;
@@ -187,6 +242,22 @@
       }
     }
 
+    /**
+     * The function isClicked determines if a mouse click falls within the boundaries of an object
+     * based on its position and size.
+     * @param mouseX - The `mouseX` parameter represents the x-coordinate of the mouse pointer on the
+     * screen. It is used in the `isClicked` function to determine if a specific point on the screen
+     * has been clicked.
+     * @param mouseY - The `mouseY` parameter in the `isClicked` function represents the y-coordinate
+     * of the mouse pointer on the screen. This function is checking if the mouse pointer is within the
+     * boundaries of a clickable area defined by the object's position (`this.x`, `this.y`) and
+     * collision size (`size
+     * @returns The function `isClicked` is checking if the mouse coordinates `(mouseX, mouseY)` are
+     * within the bounds of a rectangle centered at `(this.x, this.y)` with width `w` and height `h`.
+     * If the mouse coordinates are within the rectangle, the function returns `true`, indicating that
+     * a click event has occurred within the bounds of the rectangle. If the mouse coordinates are
+     * outside the
+     */
     isClicked(mouseX, mouseY) {
       const size = this.getCollisionSize();
       const w = size.width;
@@ -199,6 +270,19 @@
       );
     }
 
+    /**
+     * The function `isTouching` checks for collision between two sprites using custom hitboxes if
+     * available, otherwise falling back to rectangular collision detection.
+     * @param other - The `other` parameter in the `isTouching` function refers to another sprite or
+     * object that you want to check for collision with the current sprite. This function first checks
+     * if both sprites have a custom hitbox defined by a polygon. If they do, it translates the
+     * polygons to world coordinates and
+     * @returns The `isTouching` function returns a boolean value indicating whether the two sprites
+     * are touching or intersecting based on their hitbox polygons if both sprites have custom hitbox
+     * polygons defined. If either sprite does not have a hitbox polygon defined, the function falls
+     * back to rectangular collision detection and returns a boolean value based on whether the
+     * rectangles of the two sprites are intersecting.
+     */
     isTouching(other) {
   // Use custom hitboxPolygon if both sprites have one
   if (this.hitboxPolygon && other.hitboxPolygon) {
@@ -242,14 +326,37 @@
       }
     }
 
+   /**
+    * The setCostume function sets the current costume to the one at the specified index if it is
+    * within the valid range.
+    * @param index - The `index` parameter in the `setCostume` function represents the position of the
+    * costume in the `costumes` array that you want to set as the current costume. It should be a
+    * non-negative integer that is less than the length of the `costumes` array.
+    */
     setCostume(index) {
       if (index >= 0 && index < this.costumes.length) this.currentCostume = index;
     }
 
+    /**
+     * The function isHovered(mx, my) returns the result of calling the isClicked(mx, my) function.
+     * @param mx - The `mx` parameter typically represents the x-coordinate of the mouse cursor on the
+     * screen.
+     * @param my - The parameter `my` typically represents the y-coordinate of the mouse pointer on the
+     * screen. It is used to determine the vertical position of the mouse cursor.
+     * @returns The `isHovered` function is returning the result of calling the `isClicked` function
+     * with the `mx` and `my` parameters.
+     */
     isHovered(mx, my) {
       return this.isClicked(mx, my);
     }
 
+    /**
+     * The function `setControlScheme` sets the control scheme for a given object.
+     * @param scheme - Scheme refers to the specific set of controls or inputs that are used to
+     * interact with a system or application. It could include keyboard keys, mouse buttons, game
+     * controller buttons, touch gestures, or any other input method that the user can use to navigate
+     * or operate the system.
+     */
     setControlScheme(scheme) {
       this.controls = scheme;
     }
@@ -262,6 +369,11 @@
       return { width: this.size, height: this.size };
     }
 
+    /**
+     * The function isOnGround() checks if the object is touching any other object with a hitbox.
+     * @returns The `isOnGround()` function is returning a boolean value based on whether any of the
+     * objects in the `touching` array have a `hitbox` property.
+     */
     isOnGround() {
       return this.touching.some(s => s.hitbox);
     }
@@ -285,6 +397,25 @@
   }
 
   // Function to create a sprite
+  /**
+   * The function `createSprite` creates a new sprite object with specified properties and adds it to a
+   * list of drawable objects.
+   * @param [x=0] - The `x` parameter in the `createSprite` function represents the x-coordinate
+   * position of the sprite on the screen. It determines where the sprite will be initially placed
+   * horizontally.
+   * @param [y=0] - The `y` parameter in the `createSprite` function represents the vertical position
+   * of the sprite on the screen. It determines how far down the sprite is placed from the top of the
+   * screen.
+   * @param [color=white] - The `color` parameter in the `createSprite` function represents the color
+   * of the sprite being created. It is a string value that specifies the color of the sprite. By
+   * default, if no color is provided, the sprite will be created with a white color.
+   * @param imageSrcs - The `imageSrcs` parameter in the `createSprite` function is a rest parameter.
+   * It allows you to pass in an arbitrary number of image source strings when calling the function.
+   * These image source strings will be collected into an array within the function, which can then be
+   * used to create the sprite
+   * @returns The function `createSprite` returns the newly created sprite object after initializing it
+   * with the provided parameters and adding it to the `drawables` array.
+   */
   function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
     const sprite = new Sprite(x, y, color, ...imageSrcs);
     sprite.prevX = x;
@@ -294,6 +425,25 @@
   }
 
   // Function to create text
+  /**
+   * The function `createText` creates a new text object with specified properties and adds it to a
+   * list of drawable objects.
+   * @param x - The `x` parameter in the `createText` function represents the x-coordinate where you
+   * want the text to be positioned on the screen.
+   * @param y - The `y` parameter in the `createText` function represents the vertical position where
+   * the text will be displayed on the screen. It determines how far down from the top of the screen
+   * the text will be rendered.
+   * @param color - Color parameter is used to specify the color of the text that will be displayed on
+   * the screen. It can be a color name (e.g., "red", "blue") or a hexadecimal value (e.g., "#FF0000").
+   * @param text - The `text` parameter in the `createText` function represents the actual text content
+   * that you want to display at the specified `x` and `y` coordinates on the screen. It is the string
+   * that will be rendered using the specified font and color.
+   * @param [font=20px monospace] - The `font` parameter in the `createText` function specifies the
+   * font style and size to be used for the text. In this case, the default value is set to "20px
+   * monospace", which means the text will be displayed in a monospace font style with a size of 20
+   * @returns The `createText` function is returning the `textObj` object that is created using the
+   * `Text` constructor function.
+   */
   function createText(x, y, color, text, font = "20px monospace") {
     const textObj = new Text(x, y, color, text, font);
     drawables.push(textObj);
@@ -305,6 +455,11 @@
     canvasEl.height = window.innerHeight;
   }
 
+ /**
+  * The function "hide" sets the "hidden" property of an object to true.
+  * @param object - The `object` parameter in the `hide` function is an object that you want to hide by
+  * setting its `hidden` property to `true`.
+  */
   function hide(object) {
     object.hidden = true;
   }

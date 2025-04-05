@@ -1,465 +1,439 @@
-/**
- * @file mgb_canvas_engine.js
- * @description API documentation for the MGB Canvas Engine.
- *
- * This file implements the MGB Canvas Engine which provides functionality
- * for drawing, sprite management, collision detection, and event handling
- * using the HTML5 Canvas.
- */
 
-/** @global {boolean} debug - Flag for enabling debug mode */
-let debug = true;
+ 
+ 
+  /**  This will open the debug menu. */
+  let debug = true;
+  const canvasEl = document.getElementById('canvasEl');
+  const ctx = canvasEl.getContext('2d');
 
-/** @global {HTMLCanvasElement} canvasEl - The main canvas element */
-const canvasEl = document.getElementById('canvasEl');
+  let backgroundImg = null;
 
-/** @global {CanvasRenderingContext2D} ctx - The 2D rendering context for the canvas */
-const ctx = canvasEl.getContext('2d');
-
-/** @global {HTMLImageElement|null} backgroundImg - The background image */
-let backgroundImg = null;
-
-/**
- * @typedef {Object} Cursor
- * @property {number} x - Current x-coordinate of the cursor.
- * @property {number} y - Current y-coordinate of the cursor.
- * @property {boolean} isDown - Whether the cursor button is pressed.
- * @property {boolean} left - Whether the left button is pressed.
- * @property {boolean} right - Whether the right button is pressed.
- */
-
-/** @global {Cursor} cursor - The cursor state */
-const cursor = {
-  x: 0,
-  y: 0,
-  isDown: false,
-  left: false,
-  right: false
-};
-
-/** @global {Object} prevKeys - Object tracking previous key states */
-const prevKeys = {};
-
-/**
- * Sets the background image of the document.
- *
- * If the source is empty or the image fails to load, the background is set to black.
- *
- * @param {string} src - URL of the background image.
- */
-function setBackground(src) {
-  if (!src) {
-    backgroundImg = null;
-    document.body.style.backgroundColor = 'black';
-    return;
-  }
-  const img = new Image();
-  img.onload = () => {
-    backgroundImg = img;
-    document.body.style.backgroundColor = '';
+  /* The above code is defining an object named `cursor` with properties `x`, `y`, `isDown`, `left`,
+  and `right`. The `x` and `y` properties are initialized to 0, `isDown` is initialized to false,
+  and `left` and `right` are initialized to false as well. This object can be used to store
+  information about the cursor's position and state in a JavaScript program. */
+  const cursor = {
+    x: 0,
+    y: 0,
+    isDown: false,
+    left: false,
+    right: false
+  
   };
-  img.onerror = () => {
-    console.warn(`Failed to load background image: ${src}`);
-    backgroundImg = null;
-    document.body.style.backgroundColor = 'black';
-  };
-  img.src = src;
-}
 
-/** @global {HTMLElement} mousePosEl - Element for displaying mouse position */
-const mousePosEl = document.getElementById('mousePos');
+  // Track previous key states
+  const prevKeys = {};
 
-/** @global {HTMLElement} hoverInfoEl - Element for displaying hover information */
-const hoverInfoEl = document.getElementById('hoverInfo');
+  /* The above JavaScript code defines a function called `setBackground` that takes a `src` parameter.
+  If the `src` parameter is falsy (e.g., null, undefined, empty string), the function sets the
+  `backgroundImg` variable to null and changes the background color of the document body to black.
+  If the `src` parameter is truthy, the function does not specify any action. The code also contains
+  a placeholder ` */
+  function setBackground(src) {
+    if (!src) {
+      backgroundImg = null;
+      document.body.style.backgroundColor = 'black';
+      return;
+    }
 
-/** @global {Object} keys - Object for tracking current key states */
-const keys = {};
-
-/** @global {Array} drawables - Array that holds all drawable objects (sprites and text) */
-const drawables = [];
-
-/**
- * Base class for all drawable objects on the canvas.
- */
-class Drawable {
-  /**
-   * Creates a new Drawable.
-   *
-   * @param {number} x - The initial x-coordinate.
-   * @param {number} y - The initial y-coordinate.
-   */
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    /** @type {boolean} */
-    this.hidden = false;
+    const img = new Image();
+    img.onload = () => {
+      backgroundImg = img;
+      document.body.style.backgroundColor = '';
+    };
+    img.onerror = () => {
+      console.warn(`Failed to load background image: ${src}`);
+      backgroundImg = null;
+      document.body.style.backgroundColor = 'black';
+    };
+    img.src = src;
   }
 
-  /**
-   * Draws the object on the canvas.
-   * This method should be overridden by subclasses.
-   */
-  draw() {
-    // To be overridden by subclasses
-  }
-}
+  const mousePosEl = document.getElementById('mousePos');
+  const hoverInfoEl = document.getElementById('hoverInfo');
 
-/**
- * Represents a sprite with image costumes, collision detection, and event handling.
- * @extends Drawable
- */
-class Sprite extends Drawable {
-  /**
-   * Creates a new Sprite.
-   *
-   * @param {number} [x=0] - Initial x-coordinate.
-   * @param {number} [y=0] - Initial y-coordinate.
-   * @param {string} [color='white'] - The sprite's color.
-   * @param {...string} imageSrcs - One or more image source URLs for the sprite costumes.
-   */
-  constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
-    super(x, y);
-    this.color = color;
-    this.prevX = this.x;
-    this.prevY = this.y;
-    this.size = 30;
-    this.speed = 5;
-    this.border = false;
-    this.touching = [];
-    this.touchCallbacks = [];
-    this.touchOnceCache = new Set();
-    this.touchOnceCallbacks = [];
-    this.touchEndCallbacks = [];
-    this.costumes = [];
-    this.currentCostume = 0;
-    this.loadedCostumes = [];
-    this.events = {};
-    this.useOriginalSize = true;
-    this.scale = 1.0;
-    this.controls = null;
-    this.gravity = 0;
-    this.hitbox = false;
-    // Pen properties for drawing trails
-    this.penDown = false;
-    this.penTrails = [];
-    this.currentPath = null;
-    this.penColor = this.color;
-    this.penThickness = 1;
+  const keys = {};
+  const drawables = []; // Holds both sprites and text
 
-    for (const src of imageSrcs) {
-      const img = new Image();
-      img.onload = () => this.loadedCostumes.push(img);
-      img.onerror = () => console.warn(`Failed to load image: ${src}`);
-      img.src = src;
-      this.costumes.push(img);
+  // Base class for all drawable objects
+  class Drawable {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.hidden = false;
+    }
+
+    draw() {
+      // To be overridden by subclasses
     }
   }
 
-  /**
-   * Updates the sprite. Override to define custom update behavior.
-   */
-  update() {
-    // Default does nothing; override as needed.
-  }
+  // Sprite class, inheriting from Drawable
+  class Sprite extends Drawable {
+    constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
+      super(x, y);
+      this.color = color;
+      this.prevX = this.x;
+      this.prevY = this.y;
+      /**  The above code is setting the value of the property `size` to 30 in the global context. */
+      this.size = 30;
+      /**  The above code is setting the value of the property "speed" to 5 in the global scope. */
+      this.speed = 5;
+      this.border = false;
+      this.touching = [];
+      this.touchCallbacks = [];
+      this.touchOnceCache = new Set();
+      this.touchOnceCallbacks = [];
+      this.touchEndCallbacks = [];
+      this.costumes = [];
+      this.currentCostume = 0;
+      this.loadedCostumes = [];
+      this.events = {};
+      this.useOriginalSize = true;
+      /**  The above code is setting the value of the property `scale` to 1.0 in the global context. */
+      this.scale = 1.0; // New scale property, defaults to 100%
+      this.controls = null;
+      /**  The above code is setting the value of the property `gravity` to 0 in the global scope. */
+      this.gravity = 0;
+      /** The above code is setting the value of the `hitbox` property to `false`. */
+      this.hitbox = false;
+      // Add pen-related properties
+      this.penDown = false;          // Tracks if the pen is down
+      this.penTrails = [];           // Array of paths (each path is an array of {x, y} points)
+      this.currentPath = null;       // Current path being drawn
+      this.penColor = this.color;    // Pen color, defaults to sprite's color
+      this.penThickness = 1;
 
-  /**
-   * Registers an event callback for the sprite.
-   *
-   * @param {string} eventName - Name of the event.
-   * @param {Function} callback - Callback function to invoke.
-   */
-  on(eventName, callback) {
-    if (!this.events[eventName]) this.events[eventName] = [];
-    this.events[eventName].push(callback);
-  }
-
-  /**
-   * Registers a continuous touch event callback.
-   *
-   * @param {Sprite} target - The target sprite to detect touch with.
-   * @param {Function} callback - Function to call when touching the target.
-   */
-  onTouch(target, callback) {
-    this.touchCallbacks.push({ target, callback });
-  }
-
-  /**
-   * Registers a one-time touch event callback.
-   *
-   * @param {Sprite} target - The target sprite.
-   * @param {Function} callback - Function to call once when touching the target.
-   */
-  onTouchOnce(target, callback) {
-    this.touchOnceCallbacks.push({ target, callback });
-  }
-
-  /**
-   * Registers a callback for when the sprite stops touching a target.
-   *
-   * @param {Sprite} target - The target sprite.
-   * @param {Function} callback - Function to call when touch ends.
-   */
-  onTouchEnd(target, callback) {
-    this.touchEndCallbacks.push({ target, callback });
-  }
-
-  /**
-   * Starts drawing a pen trail.
-   */
-  startDrawing() {
-    if (!this.penDown) {
-      this.penDown = true;
-      this.currentPath = [{ x: this.x, y: this.y }];
-      this.penTrails.push(this.currentPath);
-    }
-  }
-
-  /**
-   * Stops drawing a pen trail.
-   */
-  stopDrawing() {
-    this.penDown = false;
-    this.currentPath = null;
-  }
-
-  /**
-   * Clears all pen trails.
-   */
-  clearPen() {
-    this.penTrails = [];
-    this.currentPath = null;
-  }
-
-  /**
-   * Triggers an event.
-   *
-   * @param {string} eventName - Name of the event.
-   * @param {*} eventObject - Data associated with the event.
-   */
-  trigger(eventName, eventObject) {
-    if (this.events[eventName]) {
-      for (const cb of this.events[eventName]) {
-        cb(eventObject);
+      for (const src of imageSrcs) {
+        const img = new Image();
+        img.onload = () => this.loadedCostumes.push(img);
+        img.onerror = () => console.warn(`Failed to load image: ${src}`);
+        img.src = src;
+        this.costumes.push(img);
       }
     }
-  }
 
-  /**
-   * Checks if the sprite is clicked based on mouse coordinates.
-   *
-   * @param {number} mouseX - The x-coordinate of the mouse.
-   * @param {number} mouseY - The y-coordinate of the mouse.
-   * @returns {boolean} True if clicked; otherwise, false.
-   */
-  isClicked(mouseX, mouseY) {
-    const size = this.getCollisionSize();
-    const w = size.width;
-    const h = size.height;
-    return (
-      mouseX >= this.x - w / 2 &&
-      mouseX <= this.x + w / 2 &&
-      mouseY >= this.y - h / 2 &&
-      mouseY <= this.y + h / 2
-    );
-  }
-
-  /**
-   * Checks if this sprite is touching another sprite.
-   *
-   * @param {Sprite} other - The other sprite to check against.
-   * @returns {boolean} True if touching; otherwise, false.
-   */
-  isTouching(other) {
-    if (this.hitboxPolygon && other.hitboxPolygon) {
-      const poly1 = this.hitboxPolygon.map(vertex => ({
-        x: vertex.x * this.scale + this.x,
-        y: vertex.y * this.scale + this.y
-      }));
-      const poly2 = other.hitboxPolygon.map(vertex => ({
-        x: vertex.x * other.scale + other.x,
-        y: vertex.y * other.scale + other.y
-      }));
-      return polygonsIntersect(poly1, poly2);
+    update() {
+    // Default does nothing; override in specific sprites as needed
     }
-    const a = this.getCollisionSize();
-    const b = other.getCollisionSize();
-    return (
-      Math.abs(this.x - other.x) < (a.width + b.width) / 2 &&
-      Math.abs(this.y - other.y) < (a.height + b.height) / 2
-    );
-  }
 
-  /**
-   * Draws the sprite on the canvas.
-   */
-  draw() {
-    if (this.hidden) return;
-    const img = this.costumes[this.currentCostume];
-    if (img && img.complete && img.naturalWidth > 0) {
-      let w, h;
-      if (this.useOriginalSize) {
-        w = img.naturalWidth * this.scale;
-        h = img.naturalHeight * this.scale;
+    on(eventName, callback) {
+      if (!this.events[eventName]) this.events[eventName] = [];
+      this.events[eventName].push(callback);
+    }
+
+ 
+   /**
+    * The onTouch function adds a target and callback to the touchCallbacks array.
+    * @param target - The `target` parameter in the `onTouch` function represents the element or object
+    * that the touch event will be applied to. It could be a DOM element, a specific area on the
+    * screen, or any other target that can receive touch input.
+    * @param callback - The `callback` parameter in the `onTouch` function is a function that will be
+    * executed when a touch event occurs on the specified `target`.
+    */
+   onTouch(target, callback) {
+      this.touchCallbacks.push({ target, callback });
+    }
+
+    /**
+     * The `onTouchOnce` function adds a target and callback to an array of touch event callbacks.
+     * @param target - The `target` parameter in the `onTouchOnce` function refers to the element or
+     * object on which the touch event will be listened for. This could be a DOM element in a web
+     * application, a UI element in a mobile app, or any other interactive component that can receive
+     * touch input.
+     * @param callback - The `callback` parameter is a function that will be executed when the `target`
+     * is touched once.
+     */
+    onTouchOnce(target, callback) {
+      this.touchOnceCallbacks.push({ target, callback });
+    }
+
+    /**
+     * The onTouchEnd function in JavaScript adds a target and callback to an array of touch end
+     * callbacks.
+     * @param target - The `target` parameter in the `onTouchEnd` function refers to the element or
+     * object on which the touch event is expected to end. This could be a DOM element, a specific
+     * component in a UI framework, or any other target that is relevant to the touch event.
+     * @param callback - The `callback` parameter is a function that will be executed when the touch
+     * end event occurs on the specified `target`.
+     */
+    onTouchEnd(target, callback) {
+      this.touchEndCallbacks.push({ target, callback });
+    }
+
+    // Start drawing by setting pen down
+    /**
+     * The `startDrawing` function initializes a new drawing path at the current position if the pen is
+     * not already down.
+     */
+    startDrawing() {
+      if (!this.penDown) {
+        this.penDown = true;
+        this.currentPath = [{ x: this.x, y: this.y }]; // Start a new path at current position
+        this.penTrails.push(this.currentPath);
+      }
+    }
+
+    // Stop drawing by lifting the pen
+    /**
+     * The function `stopDrawing()` ends the current drawing path by setting `penDown` to false and
+     * `currentPath` to null.
+     */
+    stopDrawing() {
+      this.penDown = false;
+      this.currentPath = null; // End the current path
+    }
+
+    // Clear all drawn trails for this sprite
+   /**
+    * The clearPen function resets the pen trails and current path in a JavaScript program.
+    */
+    clearPen() {
+      this.penTrails = [];
+      this.currentPath = null;
+    }    
+    
+    trigger(eventName, eventObject) {
+      if (this.events[eventName]) {
+        for (const cb of this.events[eventName]) {
+          cb(eventObject);
+        }
+      }
+    }
+
+    /**
+     * The function isClicked determines if a mouse click falls within the boundaries of an object
+     * based on its position and size.
+     * @param mouseX - The `mouseX` parameter represents the x-coordinate of the mouse pointer on the
+     * screen. It is used in the `isClicked` function to determine if a specific point on the screen
+     * has been clicked.
+     * @param mouseY - The `mouseY` parameter in the `isClicked` function represents the y-coordinate
+     * of the mouse pointer on the screen. This function is checking if the mouse pointer is within the
+     * boundaries of a clickable area defined by the object's position (`this.x`, `this.y`) and
+     * collision size (`size
+     * @returns The function `isClicked` is checking if the mouse coordinates `(mouseX, mouseY)` are
+     * within the bounds of a rectangle centered at `(this.x, this.y)` with width `w` and height `h`.
+     * If the mouse coordinates are within the rectangle, the function returns `true`, indicating that
+     * a click event has occurred within the bounds of the rectangle. If the mouse coordinates are
+     * outside the
+     */
+    isClicked(mouseX, mouseY) {
+      const size = this.getCollisionSize();
+      const w = size.width;
+      const h = size.height;
+      return (
+        mouseX >= this.x - w / 2 &&
+        mouseX <= this.x + w / 2 &&
+        mouseY >= this.y - h / 2 &&
+        mouseY <= this.y + h / 2
+      );
+    }
+
+    /**
+     * The function `isTouching` checks for collision between two sprites using custom hitboxes if
+     * available, otherwise falling back to rectangular collision detection.
+     * @param other - The `other` parameter in the `isTouching` function refers to another sprite or
+     * object that you want to check for collision with the current sprite. This function first checks
+     * if both sprites have a custom hitbox defined by a polygon. If they do, it translates the
+     * polygons to world coordinates and
+     * @returns The `isTouching` function returns a boolean value indicating whether the two sprites
+     * are touching or intersecting based on their hitbox polygons if both sprites have custom hitbox
+     * polygons defined. If either sprite does not have a hitbox polygon defined, the function falls
+     * back to rectangular collision detection and returns a boolean value based on whether the
+     * rectangles of the two sprites are intersecting.
+     */
+    isTouching(other) {
+  // Use custom hitboxPolygon if both sprites have one
+  if (this.hitboxPolygon && other.hitboxPolygon) {
+    // Translate each sprite's polygon to world coordinates.
+    const poly1 = this.hitboxPolygon.map(vertex => ({
+      x: vertex.x * this.scale + this.x,
+      y: vertex.y * this.scale + this.y
+    }));
+    const poly2 = other.hitboxPolygon.map(vertex => ({
+      x: vertex.x * other.scale + other.x,
+      y: vertex.y * other.scale + other.y
+    }));
+    return polygonsIntersect(poly1, poly2);
+  }
+  // Fallback to rectangular collision detection.
+  const a = this.getCollisionSize();
+  const b = other.getCollisionSize();
+  return (
+    Math.abs(this.x - other.x) < (a.width + b.width) / 2 &&
+    Math.abs(this.y - other.y) < (a.height + b.height) / 2
+  );
+}
+
+
+    draw() {
+      if (this.hidden) return;
+      const img = this.costumes[this.currentCostume];
+      if (img && img.complete && img.naturalWidth > 0) {
+        let w, h;
+        if (this.useOriginalSize) {
+          w = img.naturalWidth * this.scale; // Apply scaling
+          h = img.naturalHeight * this.scale;
+        } else {
+          w = this.size;
+          h = this.size;
+        }
+        ctx.drawImage(img, this.x - w / 2, this.y - h / 2, w, h);
       } else {
-        w = this.size;
-        h = this.size;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
       }
-      ctx.drawImage(img, this.x - w / 2, this.y - h / 2, w, h);
-    } else {
+    }
+
+   /**
+    * The setCostume function sets the current costume to the one at the specified index if it is
+    * within the valid range.
+    * @param index - The `index` parameter in the `setCostume` function represents the position of the
+    * costume in the `costumes` array that you want to set as the current costume. It should be a
+    * non-negative integer that is less than the length of the `costumes` array.
+    */
+    setCostume(index) {
+      if (index >= 0 && index < this.costumes.length) this.currentCostume = index;
+    }
+
+    /**
+     * The function isHovered(mx, my) returns the result of calling the isClicked(mx, my) function.
+     * @param mx - The `mx` parameter typically represents the x-coordinate of the mouse cursor on the
+     * screen.
+     * @param my - The parameter `my` typically represents the y-coordinate of the mouse pointer on the
+     * screen. It is used to determine the vertical position of the mouse cursor.
+     * @returns The `isHovered` function is returning the result of calling the `isClicked` function
+     * with the `mx` and `my` parameters.
+     */
+    isHovered(mx, my) {
+      return this.isClicked(mx, my);
+    }
+
+    /**
+     * The function `setControlScheme` sets the control scheme for a given object.
+     * @param scheme - Scheme refers to the specific set of controls or inputs that are used to
+     * interact with a system or application. It could include keyboard keys, mouse buttons, game
+     * controller buttons, touch gestures, or any other input method that the user can use to navigate
+     * or operate the system.
+     */
+    setControlScheme(scheme) {
+      this.controls = scheme;
+    }
+
+    getCollisionSize() {
+      const img = this.costumes[this.currentCostume];
+      if (this.useOriginalSize && img && img.complete && img.naturalWidth > 0) {
+        return { width: img.naturalWidth * this.scale, height: img.naturalHeight * this.scale };
+      }
+      return { width: this.size, height: this.size };
+    }
+
+    /**
+     * The function isOnGround() checks if the object is touching any other object with a hitbox.
+     * @returns The `isOnGround()` function is returning a boolean value based on whether any of the
+     * objects in the `touching` array have a `hitbox` property.
+     */
+    isOnGround() {
+      return this.touching.some(s => s.hitbox);
+    }
+  }
+
+  // Text class for rendering text
+  class Text extends Drawable {
+    constructor(x, y, color, text, font = "20px monospace") {
+      super(x, y);
+      this.color = color;
+      this.text = text;
+      this.font = font;
+    }
+
+    draw() {
+      if (this.hidden) return;
       ctx.fillStyle = this.color;
-      ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+      ctx.font = this.font;
+      ctx.fillText(this.text, this.x, this.y);
     }
   }
 
+  // Function to create a sprite
   /**
-   * Sets the sprite's costume.
-   *
-   * @param {number} index - The index of the costume to display.
+   * The function `createSprite` creates a new sprite object with specified properties and adds it to a
+   * list of drawable objects.
+   * @param [x=0] - The `x` parameter in the `createSprite` function represents the x-coordinate
+   * position of the sprite on the screen. It determines where the sprite will be initially placed
+   * horizontally.
+   * @param [y=0] - The `y` parameter in the `createSprite` function represents the vertical position
+   * of the sprite on the screen. It determines how far down the sprite is placed from the top of the
+   * screen.
+   * @param [color=white] - The `color` parameter in the `createSprite` function represents the color
+   * of the sprite being created. It is a string value that specifies the color of the sprite. By
+   * default, if no color is provided, the sprite will be created with a white color.
+   * @param imageSrcs - The `imageSrcs` parameter in the `createSprite` function is a rest parameter.
+   * It allows you to pass in an arbitrary number of image source strings when calling the function.
+   * These image source strings will be collected into an array within the function, which can then be
+   * used to create the sprite
+   * @returns The function `createSprite` returns the newly created sprite object after initializing it
+   * with the provided parameters and adding it to the `drawables` array.
    */
-  setCostume(index) {
-    if (index >= 0 && index < this.costumes.length) this.currentCostume = index;
+  function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
+    const sprite = new Sprite(x, y, color, ...imageSrcs);
+    sprite.prevX = x;
+    sprite.prevY = y;
+    drawables.push(sprite);
+    return sprite;
   }
 
+  // Function to create text
   /**
-   * Checks if the sprite is hovered by the mouse.
-   *
-   * @param {number} mx - Mouse x-coordinate.
-   * @param {number} my - Mouse y-coordinate.
-   * @returns {boolean} True if hovered; otherwise, false.
+   * The function `createText` creates a new text object with specified properties and adds it to a
+   * list of drawable objects.
+   * @param x - The `x` parameter in the `createText` function represents the x-coordinate where you
+   * want the text to be positioned on the screen.
+   * @param y - The `y` parameter in the `createText` function represents the vertical position where
+   * the text will be displayed on the screen. It determines how far down from the top of the screen
+   * the text will be rendered.
+   * @param color - Color parameter is used to specify the color of the text that will be displayed on
+   * the screen. It can be a color name (e.g., "red", "blue") or a hexadecimal value (e.g., "#FF0000").
+   * @param text - The `text` parameter in the `createText` function represents the actual text content
+   * that you want to display at the specified `x` and `y` coordinates on the screen. It is the string
+   * that will be rendered using the specified font and color.
+   * @param [font=20px monospace] - The `font` parameter in the `createText` function specifies the
+   * font style and size to be used for the text. In this case, the default value is set to "20px
+   * monospace", which means the text will be displayed in a monospace font style with a size of 20
+   * @returns The `createText` function is returning the `textObj` object that is created using the
+   * `Text` constructor function.
    */
-  isHovered(mx, my) {
-    return this.isClicked(mx, my);
+  function createText(x, y, color, text, font = "20px monospace") {
+    const textObj = new Text(x, y, color, text, font);
+    drawables.push(textObj);
+    return textObj;
   }
 
-  /**
-   * Sets the control scheme for the sprite.
-   *
-   * @param {Object} scheme - An object mapping controls (e.g., left, right, up, down).
-   */
-  setControlScheme(scheme) {
-    this.controls = scheme;
+  function resizeCanvas() {
+    canvasEl.width = window.innerWidth;
+    canvasEl.height = window.innerHeight;
   }
 
-  /**
-   * Retrieves the collision size of the sprite.
-   *
-   * @returns {{width: number, height: number}} An object containing width and height.
-   */
-  getCollisionSize() {
-    const img = this.costumes[this.currentCostume];
-    if (this.useOriginalSize && img && img.complete && img.naturalWidth > 0) {
-      return { width: img.naturalWidth * this.scale, height: img.naturalHeight * this.scale };
-    }
-    return { width: this.size, height: this.size };
+ /**
+  * The function "hide" sets the "hidden" property of an object to true.
+  * @param object - The `object` parameter in the `hide` function is an object that you want to hide by
+  * setting its `hidden` property to `true`.
+  */
+  function hide(object) {
+    object.hidden = true;
   }
 
-  /**
-   * Determines if the sprite is on the ground.
-   *
-   * @returns {boolean} True if on ground; otherwise, false.
-   */
-  isOnGround() {
-    return this.touching.some(s => s.hitbox);
-  }
-}
-
-/**
- * Represents a text object to be drawn on the canvas.
- * @extends Drawable
- */
-class Text extends Drawable {
-  /**
-   * Creates a new text object.
-   *
-   * @param {number} x - The x-coordinate.
-   * @param {number} y - The y-coordinate.
-   * @param {string} color - The text color.
-   * @param {string} text - The string content.
-   * @param {string} [font="20px monospace"] - The font style.
-   */
-  constructor(x, y, color, text, font = "20px monospace") {
-    super(x, y);
-    this.color = color;
-    this.text = text;
-    this.font = font;
-  }
-
-  /**
-   * Draws the text on the canvas.
-   */
-  draw() {
-    if (this.hidden) return;
-    ctx.fillStyle = this.color;
-    ctx.font = this.font;
-    ctx.fillText(this.text, this.x, this.y);
-  }
-}
-
-/**
- * Creates a new sprite and adds it to the list of drawable objects.
- *
- * @param {number} [x=0] - Initial x-coordinate.
- * @param {number} [y=0] - Initial y-coordinate.
- * @param {string} [color='white'] - The sprite's color.
- * @param {...string} imageSrcs - One or more image source URLs.
- * @returns {Sprite} The newly created sprite.
- */
-function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
-  const sprite = new Sprite(x, y, color, ...imageSrcs);
-  sprite.prevX = x;
-  sprite.prevY = y;
-  drawables.push(sprite);
-  return sprite;
-}
-
-/**
- * Creates a new text object and adds it to the list of drawable objects.
- *
- * @param {number} x - The x-coordinate.
- * @param {number} y - The y-coordinate.
- * @param {string} color - The text color.
- * @param {string} text - The text content.
- * @param {string} [font="20px monospace"] - The font style.
- * @returns {Text} The newly created text object.
- */
-function createText(x, y, color, text, font = "20px monospace") {
-  const textObj = new Text(x, y, color, text, font);
-  drawables.push(textObj);
-  return textObj;
-}
-
-/**
- * Resizes the canvas to match the window dimensions.
- */
-function resizeCanvas() {
-  canvasEl.width = window.innerWidth;
-  canvasEl.height = window.innerHeight;
-}
-
-/**
- * Hides a drawable object.
- *
- * @param {Drawable} object - The object to hide.
- */
-function hide(object) {
-  object.hidden = true;
-}
-
-/**
- * Determines if two polygons intersect using the Separating Axis Theorem.
- *
- * @param {Array<Object>} poly1 - Array of points defining the first polygon.
- * @param {Array<Object>} poly2 - Array of points defining the second polygon.
- * @returns {boolean} True if the polygons intersect; otherwise, false.
- */
+  // SAT collision detection helper: checks if two polygons intersect.
 function polygonsIntersect(poly1, poly2) {
   function getAxes(polygon) {
     const axes = [];
     for (let i = 0; i < polygon.length; i++) {
       const p1 = polygon[i];
       const p2 = polygon[(i + 1) % polygon.length];
+      // Compute edge vector then its perpendicular (normal)
       const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
       const normal = { x: -edge.y, y: edge.x };
+      // Normalize
       const length = Math.hypot(normal.x, normal.y);
       axes.push({ x: normal.x / length, y: normal.y / length });
     }
@@ -491,14 +465,12 @@ function polygonsIntersect(poly1, poly2) {
   return true;
 }
 
-/**
- * Generates a hitbox polygon for an image by scanning its pixels.
- *
- * @param {HTMLImageElement} image - The image element.
- * @param {number} [alphaThreshold=10] - Alpha threshold for edge detection.
- * @returns {Array<Object>} An array of points representing the convex hull of the hitbox.
- */
+
+// ----- Auto Hitbox Generation Functions -----
+
+// Generates a hitbox polygon for a given image by scanning its pixels.
 function generateHitboxFromImage(image, alphaThreshold = 10) {
+  // Create an offscreen canvas
   const offCanvas = document.createElement('canvas');
   offCanvas.width = image.naturalWidth;
   offCanvas.height = image.naturalHeight;
@@ -506,12 +478,15 @@ function generateHitboxFromImage(image, alphaThreshold = 10) {
   offCtx.drawImage(image, 0, 0);
   const imageData = offCtx.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
   const data = imageData.data;
+
+  // Collect edge pixels from the image
   const points = [];
   for (let y = 0; y < image.naturalHeight; y++) {
     for (let x = 0; x < image.naturalWidth; x++) {
       const index = (y * image.naturalWidth + x) * 4;
       const alpha = data[index + 3];
       if (alpha > alphaThreshold) {
+        // Check surrounding pixels for transparency.
         let isEdge = false;
         for (let ny = -1; ny <= 1 && !isEdge; ny++) {
           for (let nx = -1; nx <= 1; nx++) {
@@ -535,29 +510,31 @@ function generateHitboxFromImage(image, alphaThreshold = 10) {
       }
     }
   }
+  
+  // Use a convex hull algorithm (Graham Scan) to generate a polygon from the edge points.
   const hull = convexHull(points);
   return hull;
 }
 
-/**
- * Computes the convex hull of a set of points using the Graham Scan algorithm.
- *
- * @param {Array<Object>} points - Array of points.
- * @returns {Array<Object>} Array of points representing the convex hull.
- */
+// Simple convex hull using Graham Scan
 function convexHull(points) {
   if (points.length < 3) return points;
+
+  // Find the point with the lowest y (and lowest x if tied)
   let start = points[0];
   for (const point of points) {
     if (point.y < start.y || (point.y === start.y && point.x < start.x)) {
       start = point;
     }
   }
+
+  // Sort points by angle from the start point
   const sorted = points.slice().sort((a, b) => {
     const angleA = Math.atan2(a.y - start.y, a.x - start.x);
     const angleB = Math.atan2(b.y - start.y, b.x - start.x);
     return angleA - angleB;
   });
+
   const hull = [];
   for (const point of sorted) {
     while (hull.length >= 2 && cross(hull[hull.length - 2], hull[hull.length - 1], point) <= 0) {
@@ -568,28 +545,20 @@ function convexHull(points) {
   return hull;
 }
 
-/**
- * Computes the cross product of vectors OA and OB.
- *
- * @param {Object} o - The origin point.
- * @param {Object} a - Point A.
- * @param {Object} b - Point B.
- * @returns {number} The cross product.
- */
 function cross(o, a, b) {
   return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
-/**
- * Automatically generates and assigns a hitbox polygon to a sprite.
- *
- * @param {Sprite} sprite - The sprite object.
- * @param {number} [alphaThreshold=10] - Alpha threshold for hitbox generation.
- */
+// Utility: automatically generate and assign a hitbox for a sprite.
+// Call this once the sprite's costume (image) is loaded.
 function autoGenerateHitbox(sprite, alphaThreshold = 10) {
   const img = sprite.costumes[sprite.currentCostume];
   if (img && img.complete && img.naturalWidth > 0) {
+    // Generate hitbox in image coordinate space.
     const polygon = generateHitboxFromImage(img, alphaThreshold);
+    // Save the polygon to the sprite; these coordinates are relative to the image's top-left.
+    // You might want to adjust them so the polygon is relative to the sprite's center.
+    // For that, shift all points by (-img.naturalWidth/2, -img.naturalHeight/2)
     sprite.hitboxPolygon = polygon.map(pt => ({
       x: pt.x - img.naturalWidth / 2,
       y: pt.y - img.naturalHeight / 2
@@ -597,236 +566,259 @@ function autoGenerateHitbox(sprite, alphaThreshold = 10) {
   }
 }
 
-/**
- * The main game loop that updates and renders all sprites.
- */
-function gameLoop() {
-  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-  // Draw background
-  if (backgroundImg) {
-    ctx.drawImage(backgroundImg, 0, 0, canvasEl.width, canvasEl.height);
-  } else {
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-  }
+ function gameLoop() {
+    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-  // Update sprite positions and handle collisions
-  for (const sprite of drawables.filter(obj => obj instanceof Sprite)) {
-    let dx = 0;
-    let dy = 0;
-    if (sprite.controls) {
-      if (keys[sprite.controls.left]) dx -= sprite.speed;
-      if (keys[sprite.controls.right]) dx += sprite.speed;
-      if (keys[sprite.controls.up]) dy -= sprite.speed;
-      if (keys[sprite.controls.down]) dy += sprite.speed;
+    // Draw background
+    if (backgroundImg) {
+        ctx.drawImage(backgroundImg, 0, 0, canvasEl.width, canvasEl.height);
+    } else {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
     }
-    if (sprite.gravity) {
-      dy += sprite.gravity;
-    }
-    if (dx !== 0) {
-      sprite.x += dx;
-      for (const other of drawables.filter(obj => obj instanceof Sprite && obj.hitbox && obj !== sprite)) {
-        if (sprite.isTouching(other)) {
+
+    // Handle movement and collisions for all sprites
+    for (const sprite of drawables.filter(obj => obj instanceof Sprite)) {
+        let dx = 0;
+        let dy = 0;
+
+        // Calculate movement based on controls
+        if (sprite.controls) {
+            if (keys[sprite.controls.left]) dx -= sprite.speed;
+            if (keys[sprite.controls.right]) dx += sprite.speed;
+            if (keys[sprite.controls.up]) dy -= sprite.speed;
+            if (keys[sprite.controls.down]) dy += sprite.speed;
+        }
+
+        // Apply gravity if applicable
+        if (sprite.gravity) {
+            dy += sprite.gravity;
+        }
+
+        // Only resolve x-collisions if there's horizontal movement.
+if (dx !== 0) {
+  sprite.x += dx;
+  for (const other of drawables.filter(obj => obj instanceof Sprite && obj.hitbox && obj !== sprite)) {
+      if (sprite.isTouching(other)) {
           const a = sprite.getCollisionSize();
           const b = other.getCollisionSize();
-          if (dx > 0) {
-            sprite.x = other.x - b.width / 2 - a.width / 2;
-          } else if (dx < 0) {
-            sprite.x = other.x + b.width / 2 + a.width / 2;
+          if (dx > 0) { // Moving right
+              sprite.x = other.x - b.width / 2 - a.width / 2;
+          } else if (dx < 0) { // Moving left
+              sprite.x = other.x + b.width / 2 + a.width / 2;
           }
-        }
       }
-    }
-    if (dy !== 0) {
-      sprite.y += dy;
-      for (const other of drawables.filter(obj => obj instanceof Sprite && obj.hitbox && obj !== sprite)) {
-        if (sprite.isTouching(other)) {
-          const a = sprite.getCollisionSize();
-          const b = other.getCollisionSize();
-          if (dy > 0) {
-            sprite.y = other.y - b.height / 2 - a.height / 2;
-          } else if (dy < 0) {
-            sprite.y = other.y + b.height / 2 + a.height / 2;
-          }
-        }
-      }
-    }
-    if (sprite.penDown && sprite.currentPath) {
-      const lastPoint = sprite.currentPath[sprite.currentPath.length - 1];
-      if (lastPoint.x !== sprite.x || lastPoint.y !== sprite.y) {
-        sprite.currentPath.push({ x: sprite.x, y: sprite.y });
-      }
-    }
-    const size = sprite.getCollisionSize();
-    const w = size.width;
-    const h = size.height;
-    sprite.border = false;
-    if (sprite.x - w / 2 < 0) { sprite.x = w / 2; sprite.border = true; }
-    if (sprite.y - h / 2 < 0) { sprite.y = h / 2; sprite.border = true; }
-    if (sprite.x + w / 2 > canvasEl.width) { sprite.x = canvasEl.width - w / 2; sprite.border = true; }
-    if (sprite.y + h / 2 > canvasEl.height) { sprite.y = canvasEl.height - h / 2; sprite.border = true; }
-    sprite.update();
   }
-
-  // Handle collision events for touch callbacks
-  const collisionSprites = drawables.filter(obj => obj instanceof Sprite);
-  for (const sprite of collisionSprites) {
-    const prevTouching = new Set(sprite.touching);
-    sprite.touching = collisionSprites.filter(other => other !== sprite && sprite.isTouching(other));
-    for (const { target, callback } of sprite.touchCallbacks) {
-      sprite.touching.filter(s => s === target).forEach(() => callback());
-    }
-    for (const { target, callback } of sprite.touchOnceCallbacks) {
-      sprite.touching.filter(s => s === target && !sprite.touchOnceCache.has(s)).forEach(t => {
-        callback();
-        sprite.touchOnceCache.add(t);
-      });
-    }
-    for (const { target, callback } of sprite.touchEndCallbacks) {
-      prevTouching.forEach(t => {
-        if (t === target && !sprite.touching.includes(t)) {
-          callback();
-          sprite.touchOnceCache.delete(t);
-        }
-      });
-    }
-  }
-
-  // Draw pen trails
-  for (const sprite of drawables.filter(obj => obj instanceof Sprite)) {
-    for (const path of sprite.penTrails) {
-      if (path.length > 1) {
-        ctx.beginPath();
-        ctx.moveTo(path[0].x, path[0].y);
-        for (let i = 1; i < path.length; i++) {
-          ctx.lineTo(path[i].x, path[i].y);
-        }
-        ctx.strokeStyle = sprite.penColor;
-        ctx.lineWidth = sprite.penThickness;
-        ctx.stroke();
-      }
-    }
-  }
-
-  // Draw all drawable objects (sprites and text)
-  for (const obj of drawables) {
-    obj.draw();
-  }
-
-  requestAnimationFrame(gameLoop);
 }
 
-// Event listeners
-window.addEventListener('keydown', e => keys[e.key] = true);
-window.addEventListener('keyup', e => keys[e.key] = false);
+// Only resolve y-collisions if there's vertical movement.
+if (dy !== 0) {
+  sprite.y += dy;
+  for (const other of drawables.filter(obj => obj instanceof Sprite && obj.hitbox && obj !== sprite)) {
+      if (sprite.isTouching(other)) {
+          const a = sprite.getCollisionSize();
+          const b = other.getCollisionSize();
+          if (dy > 0) { // Moving down
+              sprite.y = other.y - b.height / 2 - a.height / 2;
+          } else if (dy < 0) { // Moving up
+              sprite.y = other.y + b.height / 2 + a.height / 2;
+          }
+      }
+  }
+}
 
-canvasEl.addEventListener('mousemove', (e) => {
-  const rect = canvasEl.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-  if (debug) {
-    let hovered = null;
+        // Update pen trail if drawing
+        if (sprite.penDown && sprite.currentPath) {
+            const lastPoint = sprite.currentPath[sprite.currentPath.length - 1];
+            if (lastPoint.x !== sprite.x || lastPoint.y !== sprite.y) {
+                sprite.currentPath.push({ x: sprite.x, y: sprite.y });
+            }
+        }
+
+        // Border checks
+        const size = sprite.getCollisionSize();
+        const w = size.width;
+        const h = size.height;
+        sprite.border = false;
+        if (sprite.x - w / 2 < 0) { sprite.x = w / 2; sprite.border = true; }
+        if (sprite.y - h / 2 < 0) { sprite.y = h / 2; sprite.border = true; }
+        if (sprite.x + w / 2 > canvasEl.width) { sprite.x = canvasEl.width - w / 2; sprite.border = true; }
+        if (sprite.y + h / 2 > canvasEl.height) { sprite.y = canvasEl.height - h / 2; sprite.border = true; }
+
+        // Call custom update method
+        sprite.update();
+    }
+
+    // Collision detection for touch events
+    const collisionSprites = drawables.filter(obj => obj instanceof Sprite);
+    for (const sprite of collisionSprites) {
+        const prevTouching = new Set(sprite.touching);
+        sprite.touching = collisionSprites.filter(other => other !== sprite && sprite.isTouching(other));
+        // Trigger touch callbacks
+        for (const { target, callback } of sprite.touchCallbacks) {
+            sprite.touching.filter(s => s === target).forEach(() => callback());
+        }
+        // Touch once callbacks
+        for (const { target, callback } of sprite.touchOnceCallbacks) {
+            sprite.touching.filter(s => s === target && !sprite.touchOnceCache.has(s)).forEach(t => {
+                callback();
+                sprite.touchOnceCache.add(t);
+            });
+        }
+        // Touch end callbacks
+        for (const { target, callback } of sprite.touchEndCallbacks) {
+            prevTouching.forEach(t => {
+                if (t === target && !sprite.touching.includes(t)) {
+                    callback();
+                    sprite.touchOnceCache.delete(t);
+                }
+            });
+        }
+    }
+
+    // Draw pen trails
+    for (const sprite of drawables.filter(obj => obj instanceof Sprite)) {
+        for (const path of sprite.penTrails) {
+            if (path.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(path[0].x, path[0].y);
+                for (let i = 1; i < path.length; i++) {
+                    ctx.lineTo(path[i].x, path[i].y);
+                }
+                ctx.strokeStyle = sprite.penColor;
+                ctx.lineWidth = sprite.penThickness;
+                ctx.stroke();
+            }
+        }
+    }
+
+    // Draw all drawables (sprites and text)
     for (const obj of drawables) {
-      if (obj instanceof Sprite && obj.isHovered(mouseX, mouseY)) {
-        hovered = obj;
-        break;
+        obj.draw();
+    }
+
+
+
+    requestAnimationFrame(gameLoop);
+}
+
+  window.addEventListener('keydown', e => keys[e.key] = true);
+  window.addEventListener('keyup', e => keys[e.key] = false);
+
+  canvasEl.addEventListener('mousemove', (e) => {
+    const rect = canvasEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    if (debug) {
+      let hovered = null;
+      for (const obj of drawables) {
+        if (obj instanceof Sprite && obj.isHovered(mouseX, mouseY)) {
+          hovered = obj;
+          break;
+        }
+      }
+      mousePosEl.textContent = `x: ${Math.floor(mouseX)}, y: ${Math.floor(mouseY)}${hovered ? ' (hovering: ' + (hovered.name || 'Unnamed') + ')' : ''}`;
+      if (hovered) {
+        ctx.font = '12px monospace';
+        ctx.fillStyle = 'white';
+        ctx.fillText(hovered.name || 'Unnamed', hovered.x + hovered.getCollisionSize().width / 2 + 4, hovered.y - hovered.getCollisionSize().height / 2 - 4);
+      }
+      mousePosEl.style.display = 'block';
+      hoverInfoEl.style.display = 'block';
+      if (hovered) {
+        hoverInfoEl.textContent = Object.entries(hovered)
+          .filter(([key, val]) => typeof val !== 'function')
+          .map(([key, val]) => {
+            if (Array.isArray(val)) return `${key}: [${val.length}]`;
+            if (val instanceof Set) return `${key}: Set(${val.size})`;
+            if (typeof val === 'object' && val !== null) return `${key}: {object}`;
+            return `${key}: ${val}`;
+          }).join("\n");
+      } else {
+        hoverInfoEl.textContent = '';
+      }
+    } else {
+      mousePosEl.style.display = 'none';
+      hoverInfoEl.style.display = 'none';
+    }
+  });
+
+  canvasEl.addEventListener('click', (e) => {
+    const rect = canvasEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    for (const obj of drawables) {
+      if (obj instanceof Sprite && obj.isClicked(mouseX, mouseY)) {
+        obj.trigger("click", e);
       }
     }
-    mousePosEl.textContent = `x: ${Math.floor(mouseX)}, y: ${Math.floor(mouseY)}${hovered ? ' (hovering: ' + (hovered.name || 'Unnamed') + ')' : ''}`;
-    if (hovered) {
-      ctx.font = '12px monospace';
-      ctx.fillStyle = 'white';
-      ctx.fillText(hovered.name || 'Unnamed', hovered.x + hovered.getCollisionSize().width / 2 + 4, hovered.y - hovered.getCollisionSize().height / 2 - 4);
-    }
-    mousePosEl.style.display = 'block';
-    hoverInfoEl.style.display = 'block';
-    if (hovered) {
-      hoverInfoEl.textContent = Object.entries(hovered)
-        .filter(([key, val]) => typeof val !== 'function')
-        .map(([key, val]) => {
-          if (Array.isArray(val)) return `${key}: [${val.length}]`;
-          if (val instanceof Set) return `${key}: Set(${val.size})`;
-          if (typeof val === 'object' && val !== null) return `${key}: {object}`;
-          return `${key}: ${val}`;
-        }).join("\n");
+  });
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  canvasEl.addEventListener('mousemove', (e) => {
+    const rect = canvasEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    // Update the global cursor object
+    cursor.x = mouseX;
+    cursor.y = mouseY;
+
+    if (debug) {
+        let hovered = null;
+        for (const obj of drawables) {
+            if (obj instanceof Sprite && obj.isHovered(mouseX, mouseY)) {
+                hovered = obj;
+                break;
+            }
+        }
+        mousePosEl.textContent = `x: ${Math.floor(mouseX)}, y: ${Math.floor(mouseY)}${hovered ? ' (hovering: ' + (hovered.name || 'Unnamed') + ')' : ''}`;
+        if (hovered) {
+            ctx.font = '12px monospace';
+            ctx.fillStyle = 'white';
+            ctx.fillText(hovered.name || 'Unnamed', hovered.x + hovered.getCollisionSize().width / 2 + 4, hovered.y - hovered.getCollisionSize().height / 2 - 4);
+        }
+        mousePosEl.style.display = 'block';
+        hoverInfoEl.style.display = 'block';
+        if (hovered) {
+            hoverInfoEl.textContent = Object.entries(hovered)
+                .filter(([key, val]) => typeof val !== 'function')
+                .map(([key, val]) => {
+                    if (Array.isArray(val)) return `${key}: [${val.length}]`;
+                    if (val instanceof Set) return `${key}: Set(${val.size})`;
+                    if (typeof val === 'object' && val !== null) return `${key}: {object}`;
+                    return `${key}: ${val}`;
+                }).join("\n");
+        } else {
+            hoverInfoEl.textContent = '';
+        }
     } else {
-      hoverInfoEl.textContent = '';
+        mousePosEl.style.display = 'none';
+        hoverInfoEl.style.display = 'none';
     }
-  } else {
-    mousePosEl.style.display = 'none';
-    hoverInfoEl.style.display = 'none';
-  }
 });
 
-canvasEl.addEventListener('click', (e) => {
-  const rect = canvasEl.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-  for (const obj of drawables) {
-    if (obj instanceof Sprite && obj.isClicked(mouseX, mouseY)) {
-      obj.trigger("click", e);
-    }
-  }
-});
-
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-canvasEl.addEventListener('mousemove', (e) => {
-  const rect = canvasEl.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-  cursor.x = mouseX;
-  cursor.y = mouseY;
-  if (debug) {
-    let hovered = null;
-    for (const obj of drawables) {
-      if (obj instanceof Sprite && obj.isHovered(mouseX, mouseY)) {
-        hovered = obj;
-        break;
-      }
-    }
-    mousePosEl.textContent = `x: ${Math.floor(mouseX)}, y: ${Math.floor(mouseY)}${hovered ? ' (hovering: ' + (hovered.name || 'Unnamed') + ')' : ''}`;
-    if (hovered) {
-      ctx.font = '12px monospace';
-      ctx.fillStyle = 'white';
-      ctx.fillText(hovered.name || 'Unnamed', hovered.x + hovered.getCollisionSize().width / 2 + 4, hovered.y - hovered.getCollisionSize().height / 2 - 4);
-    }
-    mousePosEl.style.display = 'block';
-    hoverInfoEl.style.display = 'block';
-    if (hovered) {
-      hoverInfoEl.textContent = Object.entries(hovered)
-        .filter(([key, val]) => typeof val !== 'function')
-        .map(([key, val]) => {
-          if (Array.isArray(val)) return `${key}: [${val.length}]`;
-          if (val instanceof Set) return `${key}: Set(${val.size})`;
-          if (typeof val === 'object' && val !== null) return `${key}: {object}`;
-          return `${key}: ${val}`;
-        }).join("\n");
-    } else {
-      hoverInfoEl.textContent = '';
-    }
-  } else {
-    mousePosEl.style.display = 'none';
-    hoverInfoEl.style.display = 'none';
-  }
-});
-
+// Track mouse button presses
 canvasEl.addEventListener('mousedown', (e) => {
-  cursor.isDown = true;
-  if (e.button === 0) cursor.left = true;
-  if (e.button === 2) cursor.right = true;
+    cursor.isDown = true;
+    if (e.button === 0) cursor.left = true;  // Left button
+    if (e.button === 2) cursor.right = true; // Right button
 });
 
+// Track mouse button releases
 canvasEl.addEventListener('mouseup', (e) => {
-  if (e.button === 0) cursor.left = false;
-  if (e.button === 2) cursor.right = false;
-  if (!cursor.left && !cursor.right) cursor.isDown = false;
+    if (e.button === 0) cursor.left = false;  // Left button
+    if (e.button === 2) cursor.right = false; // Right button
+    if (!cursor.left && !cursor.right) cursor.isDown = false; // No buttons down
 });
 
+// Prevent context menu on right-click
 canvasEl.addEventListener('contextmenu', (e) => e.preventDefault());
 
-setTimeout(() => {
-  gameLoop();
-}, 0);
+
+  setTimeout(() => {
+    gameLoop();
+  }, 0);
