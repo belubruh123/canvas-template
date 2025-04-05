@@ -18,7 +18,8 @@ Whether you're a beginner or a hobbyist, this engine helps you bring your creati
 
 1. Click the green **"Use this template"** button at the top-left of the GitHub page.
 2. This will open it in **GitHub Codespaces**.
-3. Inside Codespaces, open the terminal and run:
+3. Edit `game.js` to make your game.
+4. Inside Codespaces, open the terminal and run:
 
 ```bash
 npm run start
@@ -41,10 +42,10 @@ If you're more comfortable with the command line:
 1. Clone the repo:
 
 ```bash
-git clone https://github.com/your-username/mgb-canvas-engine.git
+git clone https://github.com/belubruh123/canvas-template.git
 ```
 
-2. Edit `game.js` to start building your project.
+2. Edit `game.js` to make your game.
 3. In the terminal, run:
 
 ```bash
