@@ -131,7 +131,16 @@
  * @extends {Drawable}
  */
 class Sprite extends Drawable {
-    constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
+  /**
+   * Creates an instance of Sprite.
+   * Note: We recommand you to use the global function @see {@link createSprite} for further information.
+   * @param {number} [x=0]
+   * @param {number} [y=0]
+   * @param {string} [color='white']
+   * @param {*} imageSrcs
+   * @memberof Sprite
+   */
+  constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
       super(x, y);
       this.color = color;
       this.prevX = this.x;
@@ -406,6 +415,16 @@ class Sprite extends Drawable {
    * @extends {Drawable}
    */
   class Text extends Drawable {
+    /**
+     * Creates an instance of Text.
+     *  Note: We recommand you to use the global function @see {@link createText} for further information.
+     * @param {*} x
+     * @param {*} y
+     * @param {*} color
+     * @param {*} text
+     * @param {string} [font="20px monospace"]
+     * @memberof Text
+     */
     constructor(x, y, color, text, font = "20px monospace") {
       super(x, y);
       this.color = color;
