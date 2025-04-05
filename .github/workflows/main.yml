@@ -3,7 +3,7 @@ name: Generate and Deploy JSDoc
 on:
   push:
     branches:
-      - main  # Adjust if your default branch is named differently
+      - main
 
 jobs:
   generate-docs:
@@ -12,12 +12,36 @@ jobs:
       - name: Checkout Source Repository
         uses: actions/checkout@v3
 
+      - name: Extract JS from index.html
+        run: |
+          awk '
+            BEGIN { in_script=0; found=0 }
+            /<script>/ {
+              if (found == 0) {
+                in_script=1
+                next
+              }
+            }
+            /<\/script>/ {
+              if (in_script == 1) {
+                in_script=0
+                found=1
+                exit
+              }
+            }
+            {
+              if (in_script == 1) {
+                print
+              }
+            }
+          ' ./src/index.html > jsDOC.js
+
       - name: Generate and Deploy Documentation
         uses: eutiveumsonho/jsdoc-builder-action@v1.0.1
         env:
           API_TOKEN_GITHUB: ${{ secrets.DOCS_GEN_GH_TOKEN }}
         with:
-          jsdoc-input-files: "./src/index.html"
+          jsdoc-input-files: "./jsDOC.js"
           destination-github-username: "belubruh123"
           destination-repository-name: "canvas-engine-docs"
           user-name: "belubruh123"
