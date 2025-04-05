@@ -1,27 +1,34 @@
 /**
  * @file mgb_canvas_engine.js
- * @brief API documentation for the MGB Canvas Engine.
+ * @description API documentation for the MGB Canvas Engine.
  *
  * This file implements the MGB Canvas Engine which provides functionality
  * for drawing, sprite management, collision detection, and event handling
  * using the HTML5 Canvas.
  */
 
-/** Debug mode flag */
+/** @global {boolean} debug - Flag for enabling debug mode */
 let debug = true;
 
-/** HTML canvas element */
+/** @global {HTMLCanvasElement} canvasEl - The main canvas element */
 const canvasEl = document.getElementById('canvasEl');
 
-/** 2D rendering context for the canvas */
+/** @global {CanvasRenderingContext2D} ctx - The 2D rendering context for the canvas */
 const ctx = canvasEl.getContext('2d');
 
-/** Background image used for rendering the canvas */
+/** @global {HTMLImageElement|null} backgroundImg - The background image */
 let backgroundImg = null;
 
 /**
- * @brief Object representing the state of the cursor.
+ * @typedef {Object} Cursor
+ * @property {number} x - Current x-coordinate of the cursor.
+ * @property {number} y - Current y-coordinate of the cursor.
+ * @property {boolean} isDown - Whether the cursor button is pressed.
+ * @property {boolean} left - Whether the left button is pressed.
+ * @property {boolean} right - Whether the right button is pressed.
  */
+
+/** @global {Cursor} cursor - The cursor state */
 const cursor = {
   x: 0,
   y: 0,
@@ -30,14 +37,15 @@ const cursor = {
   right: false
 };
 
-/** Tracks previous key states */
+/** @global {Object} prevKeys - Object tracking previous key states */
 const prevKeys = {};
 
 /**
- * @brief Sets the background image of the document.
+ * Sets the background image of the document.
  *
- * If the source is not provided or loading fails, the background will be set to black.
- * @param src The URL of the background image.
+ * If the source is empty or the image fails to load, the background is set to black.
+ *
+ * @param {string} src - URL of the background image.
  */
 function setBackground(src) {
   if (!src) {
@@ -58,45 +66,37 @@ function setBackground(src) {
   img.src = src;
 }
 
-/** 
- * @brief HTML element to display the mouse position.
- */
+/** @global {HTMLElement} mousePosEl - Element for displaying mouse position */
 const mousePosEl = document.getElementById('mousePos');
 
-/**
- * @brief HTML element to display hover information.
- */
+/** @global {HTMLElement} hoverInfoEl - Element for displaying hover information */
 const hoverInfoEl = document.getElementById('hoverInfo');
 
-/**
- * @brief Object for tracking key states.
- */
+/** @global {Object} keys - Object for tracking current key states */
 const keys = {};
 
-/**
- * @brief Array that holds all drawable objects (sprites and text).
- */
+/** @global {Array} drawables - Array that holds all drawable objects (sprites and text) */
 const drawables = [];
 
 /**
- * @class Drawable
- * @brief Base class for all drawable objects on the canvas.
+ * Base class for all drawable objects on the canvas.
  */
 class Drawable {
   /**
-   * @brief Constructs a new Drawable.
-   * @param x The initial x-coordinate.
-   * @param y The initial y-coordinate.
+   * Creates a new Drawable.
+   *
+   * @param {number} x - The initial x-coordinate.
+   * @param {number} y - The initial y-coordinate.
    */
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    /** @type {boolean} */
     this.hidden = false;
   }
 
   /**
-   * @brief Draws the object.
-   *
+   * Draws the object on the canvas.
    * This method should be overridden by subclasses.
    */
   draw() {
@@ -105,17 +105,17 @@ class Drawable {
 }
 
 /**
- * @class Sprite
- * @brief Represents a sprite with image costumes, collision detection, and event handling.
+ * Represents a sprite with image costumes, collision detection, and event handling.
  * @extends Drawable
  */
 class Sprite extends Drawable {
   /**
-   * @brief Constructs a new Sprite.
-   * @param x Initial x-coordinate (default is 0).
-   * @param y Initial y-coordinate (default is 0).
-   * @param color Color of the sprite (default is 'white').
-   * @param imageSrcs One or more image source URLs for the sprite costumes.
+   * Creates a new Sprite.
+   *
+   * @param {number} [x=0] - Initial x-coordinate.
+   * @param {number} [y=0] - Initial y-coordinate.
+   * @param {string} [color='white'] - The sprite's color.
+   * @param {...string} imageSrcs - One or more image source URLs for the sprite costumes.
    */
   constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
     super(x, y);
@@ -135,7 +135,7 @@ class Sprite extends Drawable {
     this.loadedCostumes = [];
     this.events = {};
     this.useOriginalSize = true;
-    this.scale = 1.0; // Scale factor for rendering the sprite
+    this.scale = 1.0;
     this.controls = null;
     this.gravity = 0;
     this.hitbox = false;
@@ -156,18 +156,17 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Updates the sprite.
-   *
-   * Override this method to define custom update behavior.
+   * Updates the sprite. Override to define custom update behavior.
    */
   update() {
-    // Default does nothing; override in specific sprites as needed
+    // Default does nothing; override as needed.
   }
 
   /**
-   * @brief Registers an event callback for the sprite.
-   * @param eventName The name of the event.
-   * @param callback The callback function to invoke.
+   * Registers an event callback for the sprite.
+   *
+   * @param {string} eventName - Name of the event.
+   * @param {Function} callback - Callback function to invoke.
    */
   on(eventName, callback) {
     if (!this.events[eventName]) this.events[eventName] = [];
@@ -175,34 +174,37 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Registers a continuous touch event callback.
-   * @param target The target sprite to detect touch with.
-   * @param callback The function to call when touching the target.
+   * Registers a continuous touch event callback.
+   *
+   * @param {Sprite} target - The target sprite to detect touch with.
+   * @param {Function} callback - Function to call when touching the target.
    */
   onTouch(target, callback) {
     this.touchCallbacks.push({ target, callback });
   }
 
   /**
-   * @brief Registers a one-time touch event callback.
-   * @param target The target sprite.
-   * @param callback The function to call once when the sprite touches the target.
+   * Registers a one-time touch event callback.
+   *
+   * @param {Sprite} target - The target sprite.
+   * @param {Function} callback - Function to call once when touching the target.
    */
   onTouchOnce(target, callback) {
     this.touchOnceCallbacks.push({ target, callback });
   }
 
   /**
-   * @brief Registers a callback for when the sprite stops touching a target.
-   * @param target The target sprite.
-   * @param callback The function to call when touch ends.
+   * Registers a callback for when the sprite stops touching a target.
+   *
+   * @param {Sprite} target - The target sprite.
+   * @param {Function} callback - Function to call when touch ends.
    */
   onTouchEnd(target, callback) {
     this.touchEndCallbacks.push({ target, callback });
   }
 
   /**
-   * @brief Starts drawing a pen trail.
+   * Starts drawing a pen trail.
    */
   startDrawing() {
     if (!this.penDown) {
@@ -213,7 +215,7 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Stops drawing a pen trail.
+   * Stops drawing a pen trail.
    */
   stopDrawing() {
     this.penDown = false;
@@ -221,7 +223,7 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Clears all pen trails.
+   * Clears all pen trails.
    */
   clearPen() {
     this.penTrails = [];
@@ -229,9 +231,10 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Triggers an event.
-   * @param eventName The event name.
-   * @param eventObject Data associated with the event.
+   * Triggers an event.
+   *
+   * @param {string} eventName - Name of the event.
+   * @param {*} eventObject - Data associated with the event.
    */
   trigger(eventName, eventObject) {
     if (this.events[eventName]) {
@@ -242,10 +245,11 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Checks if the sprite is clicked based on mouse coordinates.
-   * @param mouseX The x-coordinate of the mouse.
-   * @param mouseY The y-coordinate of the mouse.
-   * @return True if clicked; otherwise, false.
+   * Checks if the sprite is clicked based on mouse coordinates.
+   *
+   * @param {number} mouseX - The x-coordinate of the mouse.
+   * @param {number} mouseY - The y-coordinate of the mouse.
+   * @returns {boolean} True if clicked; otherwise, false.
    */
   isClicked(mouseX, mouseY) {
     const size = this.getCollisionSize();
@@ -260,12 +264,12 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Checks if this sprite is touching another sprite.
-   * @param other The other sprite to check against.
-   * @return True if touching; otherwise, false.
+   * Checks if this sprite is touching another sprite.
+   *
+   * @param {Sprite} other - The other sprite to check against.
+   * @returns {boolean} True if touching; otherwise, false.
    */
   isTouching(other) {
-    // Use custom hitbox polygon if available
     if (this.hitboxPolygon && other.hitboxPolygon) {
       const poly1 = this.hitboxPolygon.map(vertex => ({
         x: vertex.x * this.scale + this.x,
@@ -277,7 +281,6 @@ class Sprite extends Drawable {
       }));
       return polygonsIntersect(poly1, poly2);
     }
-    // Fallback to rectangular collision detection
     const a = this.getCollisionSize();
     const b = other.getCollisionSize();
     return (
@@ -287,7 +290,7 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Draws the sprite on the canvas.
+   * Draws the sprite on the canvas.
    */
   draw() {
     if (this.hidden) return;
@@ -309,35 +312,38 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Sets the sprite's costume.
-   * @param index The index of the costume to display.
+   * Sets the sprite's costume.
+   *
+   * @param {number} index - The index of the costume to display.
    */
   setCostume(index) {
-    if (index >= 0 && index < this.costumes.length)
-      this.currentCostume = index;
+    if (index >= 0 && index < this.costumes.length) this.currentCostume = index;
   }
 
   /**
-   * @brief Checks if the sprite is hovered by the mouse.
-   * @param mx Mouse x-coordinate.
-   * @param my Mouse y-coordinate.
-   * @return True if hovered; otherwise, false.
+   * Checks if the sprite is hovered by the mouse.
+   *
+   * @param {number} mx - Mouse x-coordinate.
+   * @param {number} my - Mouse y-coordinate.
+   * @returns {boolean} True if hovered; otherwise, false.
    */
   isHovered(mx, my) {
     return this.isClicked(mx, my);
   }
 
   /**
-   * @brief Sets the control scheme for the sprite.
-   * @param scheme An object mapping controls (e.g., left, right, up, down).
+   * Sets the control scheme for the sprite.
+   *
+   * @param {Object} scheme - An object mapping controls (e.g., left, right, up, down).
    */
   setControlScheme(scheme) {
     this.controls = scheme;
   }
 
   /**
-   * @brief Retrieves the collision size of the sprite.
-   * @return An object containing width and height.
+   * Retrieves the collision size of the sprite.
+   *
+   * @returns {{width: number, height: number}} An object containing width and height.
    */
   getCollisionSize() {
     const img = this.costumes[this.currentCostume];
@@ -348,8 +354,9 @@ class Sprite extends Drawable {
   }
 
   /**
-   * @brief Determines if the sprite is on the ground.
-   * @return True if on ground; otherwise, false.
+   * Determines if the sprite is on the ground.
+   *
+   * @returns {boolean} True if on ground; otherwise, false.
    */
   isOnGround() {
     return this.touching.some(s => s.hitbox);
@@ -357,18 +364,18 @@ class Sprite extends Drawable {
 }
 
 /**
- * @class Text
- * @brief Represents a text object to be drawn on the canvas.
+ * Represents a text object to be drawn on the canvas.
  * @extends Drawable
  */
 class Text extends Drawable {
   /**
-   * @brief Constructs a new Text object.
-   * @param x The x-coordinate.
-   * @param y The y-coordinate.
-   * @param color The text color.
-   * @param text The string content.
-   * @param font The font style (default "20px monospace").
+   * Creates a new text object.
+   *
+   * @param {number} x - The x-coordinate.
+   * @param {number} y - The y-coordinate.
+   * @param {string} color - The text color.
+   * @param {string} text - The string content.
+   * @param {string} [font="20px monospace"] - The font style.
    */
   constructor(x, y, color, text, font = "20px monospace") {
     super(x, y);
@@ -378,7 +385,7 @@ class Text extends Drawable {
   }
 
   /**
-   * @brief Draws the text on the canvas.
+   * Draws the text on the canvas.
    */
   draw() {
     if (this.hidden) return;
@@ -389,12 +396,13 @@ class Text extends Drawable {
 }
 
 /**
- * @brief Creates a new sprite and adds it to the drawables list.
- * @param x Initial x-coordinate (default 0).
- * @param y Initial y-coordinate (default 0).
- * @param color Color of the sprite (default 'white').
- * @param imageSrcs One or more image source URLs.
- * @return The newly created sprite.
+ * Creates a new sprite and adds it to the list of drawable objects.
+ *
+ * @param {number} [x=0] - Initial x-coordinate.
+ * @param {number} [y=0] - Initial y-coordinate.
+ * @param {string} [color='white'] - The sprite's color.
+ * @param {...string} imageSrcs - One or more image source URLs.
+ * @returns {Sprite} The newly created sprite.
  */
 function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
   const sprite = new Sprite(x, y, color, ...imageSrcs);
@@ -405,13 +413,14 @@ function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
 }
 
 /**
- * @brief Creates a new text object and adds it to the drawables list.
- * @param x x-coordinate.
- * @param y y-coordinate.
- * @param color Text color.
- * @param text The string content.
- * @param font Font style (default "20px monospace").
- * @return The newly created text object.
+ * Creates a new text object and adds it to the list of drawable objects.
+ *
+ * @param {number} x - The x-coordinate.
+ * @param {number} y - The y-coordinate.
+ * @param {string} color - The text color.
+ * @param {string} text - The text content.
+ * @param {string} [font="20px monospace"] - The font style.
+ * @returns {Text} The newly created text object.
  */
 function createText(x, y, color, text, font = "20px monospace") {
   const textObj = new Text(x, y, color, text, font);
@@ -420,7 +429,7 @@ function createText(x, y, color, text, font = "20px monospace") {
 }
 
 /**
- * @brief Resizes the canvas to fit the window dimensions.
+ * Resizes the canvas to match the window dimensions.
  */
 function resizeCanvas() {
   canvasEl.width = window.innerWidth;
@@ -428,18 +437,20 @@ function resizeCanvas() {
 }
 
 /**
- * @brief Hides a drawable object.
- * @param object The object to hide.
+ * Hides a drawable object.
+ *
+ * @param {Drawable} object - The object to hide.
  */
 function hide(object) {
   object.hidden = true;
 }
 
 /**
- * @brief Checks if two polygons intersect using the Separating Axis Theorem.
- * @param poly1 An array of points defining the first polygon.
- * @param poly2 An array of points defining the second polygon.
- * @return True if the polygons intersect; otherwise, false.
+ * Determines if two polygons intersect using the Separating Axis Theorem.
+ *
+ * @param {Array<Object>} poly1 - Array of points defining the first polygon.
+ * @param {Array<Object>} poly2 - Array of points defining the second polygon.
+ * @returns {boolean} True if the polygons intersect; otherwise, false.
  */
 function polygonsIntersect(poly1, poly2) {
   function getAxes(polygon) {
@@ -481,10 +492,11 @@ function polygonsIntersect(poly1, poly2) {
 }
 
 /**
- * @brief Generates a hitbox polygon from an image by scanning its pixels.
- * @param image The image element.
- * @param alphaThreshold The alpha threshold for detecting edges (default 10).
- * @return An array of points representing the convex hull of the hitbox.
+ * Generates a hitbox polygon for an image by scanning its pixels.
+ *
+ * @param {HTMLImageElement} image - The image element.
+ * @param {number} [alphaThreshold=10] - Alpha threshold for edge detection.
+ * @returns {Array<Object>} An array of points representing the convex hull of the hitbox.
  */
 function generateHitboxFromImage(image, alphaThreshold = 10) {
   const offCanvas = document.createElement('canvas');
@@ -528,9 +540,10 @@ function generateHitboxFromImage(image, alphaThreshold = 10) {
 }
 
 /**
- * @brief Computes the convex hull of a set of points using the Graham Scan algorithm.
- * @param points Array of points.
- * @return Array of points representing the convex hull.
+ * Computes the convex hull of a set of points using the Graham Scan algorithm.
+ *
+ * @param {Array<Object>} points - Array of points.
+ * @returns {Array<Object>} Array of points representing the convex hull.
  */
 function convexHull(points) {
   if (points.length < 3) return points;
@@ -556,20 +569,22 @@ function convexHull(points) {
 }
 
 /**
- * @brief Computes the cross product of vectors OA and OB.
- * @param o The origin point.
- * @param a Point A.
- * @param b Point B.
- * @return The cross product value.
+ * Computes the cross product of vectors OA and OB.
+ *
+ * @param {Object} o - The origin point.
+ * @param {Object} a - Point A.
+ * @param {Object} b - Point B.
+ * @returns {number} The cross product.
  */
 function cross(o, a, b) {
   return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
 /**
- * @brief Automatically generates and assigns a hitbox polygon to a sprite.
- * @param sprite The sprite object.
- * @param alphaThreshold The alpha threshold for hitbox generation (default 10).
+ * Automatically generates and assigns a hitbox polygon to a sprite.
+ *
+ * @param {Sprite} sprite - The sprite object.
+ * @param {number} [alphaThreshold=10] - Alpha threshold for hitbox generation.
  */
 function autoGenerateHitbox(sprite, alphaThreshold = 10) {
   const img = sprite.costumes[sprite.currentCostume];
@@ -583,7 +598,7 @@ function autoGenerateHitbox(sprite, alphaThreshold = 10) {
 }
 
 /**
- * @brief Main game loop that updates and renders all sprites.
+ * The main game loop that updates and renders all sprites.
  */
 function gameLoop() {
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
@@ -702,7 +717,7 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Event Listeners
+// Event listeners
 window.addEventListener('keydown', e => keys[e.key] = true);
 window.addEventListener('keyup', e => keys[e.key] = false);
 
