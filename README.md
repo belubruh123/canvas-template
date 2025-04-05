@@ -72,7 +72,7 @@ A lot! The engine includes:
 - Scene and object management
 - And more!
 
-Check out our [📄 Documentation](tinyurl.com/MGB-docs) *(link coming soon)* for a full list of features and how to use them.
+Check out our [📄 Documentation](https://tinyurl.com/MGB-docs) for a full list of features and how to use them.
 
 ---
 
