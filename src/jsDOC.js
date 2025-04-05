@@ -1,4 +1,4 @@
- /**
+/**
  * @description
  * This is the home or introductory section of the documentation.
  * Here you can find all the possible things you can do with the canvas engine.
@@ -358,7 +358,12 @@ class Sprite extends Drawable {
     }
   }
 
-  // Text class for rendering text
+  /**
+   *
+   *
+   * @class Text This makes the text as a object shown on canvas.
+   * @extends {Drawable}
+   */
   class Text extends Drawable {
     constructor(x, y, color, text, font = "20px monospace") {
       super(x, y);
