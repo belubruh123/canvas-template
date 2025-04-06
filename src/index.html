@@ -39,15 +39,16 @@
 <div id="hoverInfo"></div>
 
 <script>
- /**
- * @description
- * This is the home or introductory section of the documentation.
- * Here you can find all the possible things you can do with the canvas engine.
- *
- * The functions below are part of the utility module.
+
+
+/** 
+ * @file The Best Engine Ever!
+ * 
+ * @version 0.2
+ * @author Jeremy Lin
+ * @copyright 2025
+ * 
  */
-
-
 
 
  
@@ -134,10 +135,10 @@ class Sprite extends Drawable {
   /**
    * Creates an instance of Sprite.
    * Note: We recommand you to use the global function @see {@link createSprite} for further information.
-   * @param {number} [x=0]
-   * @param {number} [y=0]
-   * @param {string} [color='white']
-   * @param {*} imageSrcs
+   * @param {number} [x=0] The x for the sprite you want to be at start.
+   * @param {number} [y=0] The y for the sprite you want to be at start.
+   * @param {string} [color='white'] The color for the sprite you want to be at start.
+   * @param {*} imageSrcs The image for the sprite you want to be at start. (OPTIONAL)
    * @memberof Sprite
    */
   constructor(x = 0, y = 0, color = 'white', ...imageSrcs) {
@@ -242,6 +243,18 @@ class Sprite extends Drawable {
         this.currentPath = [{ x: this.x, y: this.y }]; // Start a new path at current position
         this.penTrails.push(this.currentPath);
       }
+    }
+/**
+ *
+ * This is a function that set sprite position. 
+ * Tips: Use Sprite.x = value is possible too.
+ * @param {*} x The sprite X
+ * @param {*} y The sprite Y
+ * @memberof Sprite
+ */
+goTo(x,y) {
+      this.x = x;
+      this.y = y;
     }
 
     // Stop drawing by lifting the pen
