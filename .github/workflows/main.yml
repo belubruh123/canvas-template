@@ -20,7 +20,7 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.DOCS_GEN_GH_TOKEN }}
         with:
-          jsdoc-input-files: "./library.js"
+          jsdoc-input-files: "./src/library.js"
           destination-github-username: "belubruh123"
           destination-repository-name: "canvas-engine-docs"
           user-name: "belubruh123"
