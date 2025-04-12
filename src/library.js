@@ -231,6 +231,8 @@ class Sprite extends Drawable {
     startDrawing() {
         if (!this.penDown) {
             this.penDown = true;
+        }
+        if (this.penDown) {
             this.currentPath = [{ x: this.x, y: this.y }];
             this.penTrails.push(this.currentPath);
         }
@@ -251,7 +253,6 @@ class Sprite extends Drawable {
      */
     stopDrawing() {
         this.penDown = false;
-        this.currentPath = null;
     }
 
     /**
@@ -259,7 +260,7 @@ class Sprite extends Drawable {
      */
     clearPen() {
         this.penTrails = [];
-        this.currentPath = null;
+        if (this.penDown) {this.startDrawing()}
     }
 
     /**
