@@ -431,6 +431,23 @@ class Text extends Drawable {
     }
 }
 
+
+/**
+ * Creates a new sprite and adds it to drawables.
+ * @param {number} [x=0] - The starting x-coordinate.
+ * @param {number} [y=0] - The starting y-coordinate.
+ * @param {string} [color='white'] - The sprite color.
+ * @param {...string} imageSrcs - Optional image sources for costumes.
+ * @returns {Sprite} The created sprite.
+ */
+function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
+    const sprite = new Sprite(x, y, color, ...imageSrcs);
+    sprite.prevX = x;
+    sprite.prevY = y;
+    drawables.push(sprite);
+    return sprite;
+}
+
 /**
  * Creates a new text object and adds it to drawables.
  * @param {number} x - The x-coordinate.
