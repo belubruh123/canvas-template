@@ -401,8 +401,9 @@ class Text extends Drawable {
      * @param {string} color - The text color.
      * @param {string} text - The text content.
      * @param {string} [font="20px monospace"] - The font style.
+     * @param {boolean} [doCenter=false] - Whether to center the text horizontally.
      */
-    constructor(x, y, color, text, font = "20px monospace") {
+    constructor(x, y, color, text, font = "20px monospace", doCenter = false) {
         super(x, y);
         /** @type {string} Text color */
         this.color = color;
@@ -410,6 +411,8 @@ class Text extends Drawable {
         this.text = text;
         /** @type {string} Font style */
         this.font = font;
+        /** @type {boolean} Whether to center the text horizontally */
+        this.doCenter = doCenter;
     }
 
     /**
@@ -419,24 +422,13 @@ class Text extends Drawable {
         if (this.hidden) return;
         ctx.fillStyle = this.color;
         ctx.font = this.font;
-        ctx.fillText(this.text, this.x, this.y);
+        let x = this.x;
+        if (this.doCenter) {
+            const textWidth = ctx.measureText(this.text).width;
+            x = (canvaX - textWidth) / 2; // Center horizontally based on canvas width
+        }
+        ctx.fillText(this.text, x, this.y);
     }
-}
-
-/**
- * Creates a new sprite and adds it to drawables.
- * @param {number} [x=0] - The starting x-coordinate.
- * @param {number} [y=0] - The starting y-coordinate.
- * @param {string} [color='white'] - The sprite color.
- * @param {...string} imageSrcs - Optional image sources for costumes.
- * @returns {Sprite} The created sprite.
- */
-function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
-    const sprite = new Sprite(x, y, color, ...imageSrcs);
-    sprite.prevX = x;
-    sprite.prevY = y;
-    drawables.push(sprite);
-    return sprite;
 }
 
 /**
@@ -446,10 +438,11 @@ function createSprite(x = 0, y = 0, color = 'white', ...imageSrcs) {
  * @param {string} color - The text color.
  * @param {string} text - The text content.
  * @param {string} [font="20px monospace"] - The font style.
+ * @param {boolean} [doCenter=false] - Whether to center the text horizontally.
  * @returns {Text} The created text object.
  */
-function createText(x, y, color, text, font = "20px monospace") {
-    const textObj = new Text(x, y, color, text, font);
+function createText(x, y, color, text, font = "20px monospace", doCenter = false) {
+    const textObj = new Text(x, y, color, text, font, doCenter);
     drawables.push(textObj);
     return textObj;
 }
