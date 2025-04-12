@@ -456,6 +456,14 @@ function hide(object) {
 }
 
 /**
+ * Shows a drawable object.
+ * @param {Drawable} object - The object to show.
+ */
+function show(object) {
+    object.hidden = false;
+}
+
+/**
  * Checks if two polygons intersect using SAT.
  * @param {Array.<{x: number, y: number}>} poly1 - First polygon vertices.
  * @param {Array.<{x: number, y: number}>} poly2 - Second polygon vertices.
