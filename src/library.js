@@ -239,6 +239,88 @@ class Sprite extends Drawable {
     }
 
     /**
+    * This sets the pen thickness of the sprite pen.
+    *
+    * @param {*} thickness - The thickness of the sprite pen.
+    * @memberof Sprite
+    */
+      setPenThickness(thickness) {
+        this.penThickness = thickness;
+    }
+
+    /**
+    * This changes the pen thickness of the sprite pen.
+    *
+    * @param {*} thickness - The thickness value of the sprite pen you want to add/minus.
+    * @memberof Sprite
+    */
+    changePenThicknessBy(thickness) {
+        this.penThickness += thickness;
+    }
+
+
+    /**
+     * Set the scale(for images costume only!) of the sprite.
+     *
+     * @param {*} scale - The scale you want to set for your sprite.
+     * @memberof Sprite
+     */
+    setScale(scale) {
+        this.scale = scale;
+    }
+
+     /**
+     * Change scale(for images costume only!) of the sprite.
+     *
+     * @param {*} scale - The scale you want to add/minus for your sprite.
+     * @memberof Sprite
+     */
+     changeScaleBy(scale) {
+        this.scale += scale;
+    }
+
+    /**
+     * Set the size(for no-image costume only!) of the sprite.
+     *
+     * @param {*} size - The size you want to set for your sprite.
+     * @memberof Sprite
+     */
+    setSize(size) {
+        this.size = size;
+    }
+
+     /**
+     * Change size(for no-image costume only!) of the sprite.
+     *
+     * @param {*} size - The scale you want to add/minus for your sprite.
+     * @memberof Sprite
+     */
+     changeSizeBy(size) {
+        this.size += size;
+    }
+
+
+    /**
+    * Add hitbox for the sprite.
+    *
+    * @param {*} hitbox - Type true/false only!
+    * @memberof Sprite
+    */
+    doHitbox(hitbox) {
+        this.hitbox = hitbox
+    }
+
+    /**
+    * Makes sprite have gravity but not real physics!
+    *
+    * @param {*} gravity - Type the gravity force power value and type 0 if you dont want gravity!
+    * @memberof Sprite
+    */
+    setGravity(gravity) {
+        this.hitbox = hitbox
+    }
+
+    /**
      * Sets the sprite’s position.
      * @param {number} x - The new x-coordinate.
      * @param {number} y - The new y-coordinate.
@@ -247,6 +329,39 @@ class Sprite extends Drawable {
         this.x = x;
         this.y = y;
     }
+
+    /**
+     * Sets the sprite’s position(ONLY X).
+     * @param {number} x - The new x-coordinate.
+     */
+    setX(x) {
+        this.x = x;
+    }
+
+    /**
+     * Sets the sprite’s position(ONLY Y).
+     * @param {number} y - The new y-coordinate.
+     */
+    setY(y) {
+        this.y = y;
+    }
+
+    /**
+     * Changes the sprite’s position(ONLY X).
+     * @param {number} x - The x-coordinate you want to add/minus.
+     */
+    changeXBy(chgX) {
+        this.x += chgX;
+    }
+
+    /**
+     * Changes the sprite’s position(ONLY Y).
+     * @param {number} Y - The y-coordinate you want to add/minus.
+     */
+    changeYBy(chgY) {
+        this.y += chgY;
+    }
+
 
     /**
      * Stops drawing the pen trail.
@@ -386,6 +501,35 @@ class Sprite extends Drawable {
     isOnGround() {
         return this.touching.some(s => s.hitbox);
     }
+    /**
+     *
+     *
+     * @param {*} speed - The speed you wanna set for the sprite if controlschem is set.
+     * @memberof Sprite
+     */
+    setSpeed(speed) {
+        this.speed =  speed;
+    }
+
+    /**
+     *
+     *
+     * @param {*} speed - The speed you wanna change for the sprite if controlschem is set.
+     * @memberof Sprite
+     */
+    changeSpeedBy(speed) {
+        this.speed +=  speed;
+    }
+    /**
+     *
+     *
+     * @param {*} color - The color you want to set for sprite.
+     * @memberof Sprite
+     */
+    setColor(color) {
+        this.color = color
+    }
+
 }
 
 /**
