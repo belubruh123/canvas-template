@@ -759,6 +759,15 @@ function convexHull(points) {
 function cross(o, a, b) {
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
+/**
+ * Makes your code run after this. Only work for async function.
+ *
+ * @param {*} ms - The ms you want to wait
+ * @return {*} 
+ */
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 /**
  * Generates and assigns a hitbox for a sprite’s current costume.
@@ -779,7 +788,13 @@ function autoGenerateHitbox(sprite, alphaThreshold = 10) {
 /**
  * The main game loop, handling updates and rendering.
  */
-function gameLoop() {
+function LibraryLoopMGB() {
+
+    canvasEl.width = canvaX; // Set drawing buffer width
+    canvasEl.height = canvaY; // Set drawing buffer height
+    canvasEl.style.width = canvaX + 'px'; // Set display width
+    canvasEl.style.height = canvaY + 'px'; // Set display height
+
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
     // Draw background
@@ -897,7 +912,7 @@ function gameLoop() {
         obj.draw();
     }
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(LibraryLoopMGB);
 }
 
 /**
@@ -991,5 +1006,5 @@ canvasEl.addEventListener('contextmenu', (e) => e.preventDefault());
  * Starts the game loop.
  */
 setTimeout(() => {
-    gameLoop();
+    LibraryLoopMGB();
 }, 0);
