@@ -67,7 +67,7 @@ npm run build
 A lot! The engine includes:
 
 - Easy sprite creation
-- Movement and animation support (```sprite.x += 1``` or ```sprite.x = 1```...etc)
+- Movement and animation support (```sprite.XBy(1)``` or ```sprite.setX(1)```...etc)
 - Event handling (mouse, keyboard, etc.)
 - Scene and object management
 - And more!
