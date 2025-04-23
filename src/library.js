@@ -254,6 +254,52 @@ class Sprite extends Drawable {
     this.trigger("delete", {});
   }
 
+  /* ───── Layer / Depth helpers ───── */
+
+  /** Bring this sprite to the very front layer (topmost). */
+  goToFront() {
+    const i = drawables.indexOf(this);
+    if (i !== -1) {
+      drawables.splice(i, 1);
+      drawables.push(this); // end = front
+    }
+  }
+
+  /** Send this sprite to the very back layer (bottom). */
+  goToBack() {
+    const i = drawables.indexOf(this);
+    if (i !== -1) {
+      drawables.splice(i, 1);
+      drawables.unshift(this); // start = back
+    }
+  }
+
+  /**
+   * Move this sprite forward **n** layers (default 1).
+   * Equivalent to Scratch “go forward (n) layers”.
+   * @param {number} n
+   */
+  goForward(n = 1) {
+    const i = drawables.indexOf(this);
+    if (i === -1) return;
+    const newIndex = Math.min(drawables.length - 1, i + n);
+    drawables.splice(i, 1);
+    drawables.splice(newIndex, 0, this);
+  }
+
+  /**
+   * Move this sprite backward **n** layers (default 1).
+   * Equivalent to Scratch “go back (n) layers”.
+   * @param {number} n
+   */
+  goBack(n = 1) {
+    const i = drawables.indexOf(this);
+    if (i === -1) return;
+    const newIndex = Math.max(0, i - n);
+    drawables.splice(i, 1);
+    drawables.splice(newIndex, 0, this);
+  }
+
   /**
    * Creates a Scratch‑style clone of this sprite.
    * ‑ Copies visuals & state (but NOT "click" handlers by default)
