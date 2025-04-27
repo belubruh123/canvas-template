@@ -761,6 +761,50 @@ class Text extends Drawable {
     }
     ctx.fillText(this.text, x, this.y);
   }
+
+
+  /**
+   * Sets the sprite’s position.
+   * @param {number} x - The new x-coordinate.
+   * @param {number} y - The new y-coordinate.
+   */
+  goTo(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+   /**
+   * Sets the sprite’s position(ONLY X).
+   * @param {number} x - The new x-coordinate.
+   */
+   setX(x) {
+    this.x = x;
+  }
+
+  /**
+   * Sets the sprite’s position(ONLY Y).
+   * @param {number} y - The new y-coordinate.
+   */
+  setY(y) {
+    this.y = y;
+  }
+
+  /**
+   * Changes the sprite’s position(ONLY X).
+   * @param {number} x - The x-coordinate you want to add/minus.
+   */
+  changeXBy(chgX) {
+    this.x += chgX;
+  }
+
+  /**
+   * Changes the sprite’s position(ONLY Y).
+   * @param {number} Y - The y-coordinate you want to add/minus.
+   */
+  changeYBy(chgY) {
+    this.y += chgY;
+  }
+
 }
 
 /**

@@ -23,6 +23,7 @@ const scoreText = createText(10, 30, 'white', 'Score: 0');
 const timerText = createText(canvaX - 10, 30, 'white', '60');
 let score = 0;
 const addScore = n => { score += n; scoreText.text = 'Score: ' + score; };
+let bullet 
 
 /* -------------------------------------------------------------
    PLAYER – cyan square with gravity & keyboard controls
@@ -34,15 +35,17 @@ player.setSpeed(6);
 player.setControlScheme({ left: 'ArrowLeft', right: 'ArrowRight', up: 'Space' });
 player.setPenThickness(2);      // lime trail
 player.penColor = 'lime';
+player.doHitbox = true;
 
 /* Shoot a yellow square bullet (clone) on click */
 player.on('click', () => {
-    const bullet = player.clone();
-    bullet.setColor('yellow').setSize(18);
+    bullet = player.clone();
+    bullet.setColor('yellow');
+    bullet.setSize(10);
     bullet.penDown = false; bullet.gravity = 0;
     bullet.update = () => {
         bullet.changeYBy(-12);
-        if (bullet.y < -20) bullet.delete();
+        if (bullet.border) bullet.delete();
     };
 });
 
@@ -55,11 +58,11 @@ function spawnAlien() {
     alien.setSize(42); alien.gravity = 0.4; alien.doHitbox(true);
 
     alien.update = () => { if (alien.y > canvaY + 40) alien.delete(); };
-
-    // One‑time bullet collision handler
-    for (const d of drawables)
-        if (d !== player && d !== alien)
-            alien.onTouchOnce(d, () => { addScore(1); d.delete(); alien.delete(); });
+    if (alien.border = true && alien.y > 100) {
+        alien.delete();
+    }
+    // One‑time bullet collision handler   
+    alien.onTouch(bullet, () => { addScore(1); bullet.delete(); alien.delete(); })
 }
 
 /* Spawn ~3 aliens per second */
