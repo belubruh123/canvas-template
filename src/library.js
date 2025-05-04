@@ -1,7 +1,7 @@
 /**
  * @file The Best Engine Ever!
  *
- * @version 0.6
+ * @version 0.7-Ultimate
  * @author Jeremy Lin
  * @copyright 2025
  */
@@ -806,6 +806,231 @@ class Text extends Drawable {
   }
 
 }
+
+/*────────────────────────  RealTypeBox  ───────────────────────*/
+/**
+ * Editable text field that looks like part of the canvas but
+ * relies on a hidden HTML &lt;input&gt; for actual typing, giving
+ * you proper IME / copy-paste support.
+ *
+ * ```js
+ * const chat = createTypeBox(100, 600, 500, 40);
+ * chat.onSubmit(t => console.log("player typed:", t));
+ * ```
+ *
+ * @class RealTypeBox
+ * @extends Drawable
+ */
+class RealTypeBox extends Drawable {
+  /**
+   * @param {number} x - Left-top **x** in canvas coordinates.
+   * @param {number} y - Left-top **y** in canvas coordinates.
+   * @param {number} w - Width  of the input field (px).
+   * @param {number} h - Height of the input field (px).
+   */
+  constructor(x, y, w, h) {
+    super(x, y);
+
+    /** @type {number} Width of the visible field. */
+    this.w = w;
+    /** @type {number} Height of the visible field. */
+    this.h = h;
+    /** @type {number} Corner radius for the rounded rect. */
+    this.r = 8;
+
+    /** @type {string} Current text value. */
+    this.value = "";
+    /** @type {boolean} Whether the box currently has focus. */
+    this.focused = false;
+    /** @type {Array.<(text:string)=>void>} Submit callbacks. */
+    this.submitCbs = [];
+
+    /* ── create the overlay <input> ───────────────────────── */
+    const tpl = document.getElementById("typeboxTemplate");
+    /** @type {HTMLInputElement} */
+    this.input = tpl.cloneNode();
+    this.input.removeAttribute("id");         // avoid duplicate IDs
+    tpl.parentNode.appendChild(this.input);
+
+    /* style it to match size */
+    this.input.style.width     = `${w}px`;
+    this.input.style.height    = `${h}px`;
+    this.input.style.fontSize  = `${h * 0.6}px`;
+
+    /* keep engine ←→ DOM value in sync */
+    this.input.addEventListener("input", () => {
+      this.value = this.input.value;
+    });
+
+    /* fire submit on Enter */
+    this.input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        this._fireSubmit();
+        e.preventDefault();
+      }
+    });
+  }
+
+  /**
+   * Draws the box and positions its DOM &lt;input&gt; each frame.
+   * Called automatically by the engine’s main loop.
+   */
+  draw() {
+    if (this.hidden) {
+      this.input.style.display = "none";
+      return;
+    }
+
+    
+
+    /* 1️⃣ pretty background on the canvas */
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.fillStyle = "rgba(0,0,0,0.85)";
+    _roundRect(0, 0, this.w, this.h, this.r);
+    ctx.fill();
+    ctx.restore();
+
+    /* 2️⃣ overlay the real <input> */
+    const canvasRect = canvasEl.getBoundingClientRect();
+    this.input.style.left    = `${canvasRect.left + this.x}px`;
+    this.input.style.top     = `${canvasRect.top  + this.y}px`;
+    this.input.style.display = "block";
+  }
+
+  /**
+   * Sets the sprite’s position.
+   * @param {number} x - The new x-coordinate.
+   * @param {number} y - The new y-coordinate.
+   */
+  goTo(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+
+  /**
+   * Gives keyboard focus to this textbox.
+   */
+  focus() {
+    this.focused = true;
+    this.input.focus();
+  }
+
+  /**
+   * Removes keyboard focus from this textbox.
+   */
+  blur() {
+    this.focused = false;
+    this.input.blur();
+  }
+
+  /**
+   * Register a callback that runs when the user presses Enter.
+   *
+   * @param {(text:string)=>void} cb - Handler receiving submitted text.
+   */
+  onSubmit(cb) {
+    this.submitCbs.push(cb);
+  }
+
+  /** @private */
+  _fireSubmit() {
+    this.submitCbs.forEach((fn) => fn(this.value));
+    this.value       = "";
+    this.input.value = "";
+  }
+
+  /**
+   * Completely removes the textbox and its DOM element.
+   * (Called automatically if you use your engine’s `delete()`.)
+   */
+  delete() {
+    super.delete();
+    this.input.remove();
+  }
+
+  
+
+  /**
+   * Hit-test helper for click handling.
+   *
+   * @param {number} mx - Mouse **x** (canvas coords).
+   * @param {number} my - Mouse **y** (canvas coords).
+   * @returns {boolean} True if the point is inside the box.
+   */
+  _hit(mx, my) {
+    return (
+      mx >= this.x &&
+      mx <= this.x + this.w &&
+      my >= this.y &&
+      my <= this.y + this.h
+    );
+  }
+}
+
+/*──────── rounded-rect path helper ───────*/
+
+/**
+ * Adds a rounded-rectangle path to the current canvas context.
+ *
+ * @private
+ * @param {number} x - Left-top x.
+ * @param {number} y - Left-top y.
+ * @param {number} w - Width.
+ * @param {number} h - Height.
+ * @param {number} r - Corner radius.
+ */
+function _roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/*──────── factory shortcut ───────────────*/
+
+/**
+ * Factory that mimics `createSprite` / `createText`.
+ *
+ * ```js
+ * const tb = createTypeBox(60, 500, 400, 40);
+ * ```
+ *
+ * @param {number} x       - Left-top x (canvas coords).
+ * @param {number} y       - Left-top y (canvas coords).
+ * @param {number} [w=400] - Width  (px).
+ * @param {number} [h=40]  - Height (px).
+ * @returns {RealTypeBox}  The created textbox instance.
+ */
+function createTypeBox(x, y, w = 400, h = 40) {
+  const tb = new RealTypeBox(x, y, w, h);
+  drawables.push(tb);
+  return tb;
+}
+
+/*──────────────── focus / click glue ─────────────────*/
+
+/* Extend your existing canvas click handler (add once, after sprites) */
+canvasEl.addEventListener("click", (e) => {
+  const rect = canvasEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  /* is there a TypeBox under that click? */
+  const clickedTB = drawables
+    .filter((d) => d instanceof RealTypeBox && !d.hidden)
+    .find((tb) => tb._hit(mx, my));
+
+  /* focus the clicked one, blur the rest */
+  drawables
+    .filter((d) => d instanceof RealTypeBox)
+    .forEach((tb) => (tb === clickedTB ? tb.focus() : tb.blur()));
+});
+
 
 /**
  * Creates a new sprite and adds it to drawables.

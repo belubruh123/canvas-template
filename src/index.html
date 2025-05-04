@@ -51,6 +51,19 @@
 <div id="mousePos">x: 0, y: 0</div>
 <div id="canvasContainer">
   <canvas id="canvasEl"></canvas>
+   <!-- keep this template element for dynamic cloning (hidden) -->
+   <input id="typeboxTemplate" type="text"
+   style="
+     position:absolute;
+     border:none;
+     border-radius:8px;
+     padding:8px 12px;
+     background:#000;
+     color:#fff;
+     font:20px monospace;
+     outline:none;
+     display:none;    /* <-- invisible until needed */
+   ">
 </div>
 <div id="hoverInfo"></div>
 
