@@ -842,7 +842,7 @@ class RealTypeBox extends Drawable {
     this.value = "";
     /** @type {boolean} Whether the box currently has focus. */
     this.focused = false;
-    /** @type {Array.<(text:string)=>void>} Submit callbacks. */
+    /** @type {Array} Submit callbacks. */
     this.submitCbs = [];
 
     /* ── create the overlay <input> ───────────────────────── */
@@ -928,7 +928,7 @@ class RealTypeBox extends Drawable {
   /**
    * Register a callback that runs when the user presses Enter.
    *
-   * @param {(text:string)=>void} cb - Handler receiving submitted text.
+   * @param {string} cb - Handler receiving submitted text.
    */
   onSubmit(cb) {
     this.submitCbs.push(cb);
