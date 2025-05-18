@@ -173,6 +173,8 @@ class Sprite extends Drawable {
     this.penThickness = 1;
     /** @type {number} Facing direction in degrees (Scratch style: 0=up, 90=right) */
     this.direction = 90;
+    /** @type {boolean} If stop at Border or not */
+    this.doStopAtBorder = false;
 
     for (const src of imageSrcs) {
       const img = new Image();
@@ -588,6 +590,7 @@ class Sprite extends Drawable {
       Math.abs(this.y - other.y) < (a.height + b.height) / 2
     );
   }
+  
 
   /**
    * Points the sprite in an absolute direction (Scratch style).
@@ -1429,20 +1432,24 @@ function LibraryLoopMGB() {
     const w = size.width;
     const h = size.height;
     sprite.border = false;
-    if (sprite.x - w / 2 < 0) {
-      sprite.x = w / 2;
+    if (sprite.x - w / 2 <= 0) {
+      if (sprite.doStopAtBorder) {sprite.x = w / 2;}
+      
       sprite.border = true;
     }
-    if (sprite.y - h / 2 < 0) {
-      sprite.y = h / 2;
+    if (sprite.y - h / 2 <= 0) {
+      if (sprite.doStopAtBorder) {sprite.y = h / 2;}
+      
       sprite.border = true;
     }
-    if (sprite.x + w / 2 > canvasEl.width) {
-      sprite.x = canvasEl.width - w / 2;
+    if (sprite.x + w / 2 >= canvasEl.width) {
+      if (sprite.doStopAtBorder) {sprite.x = canvasEl.width - w / 2;}
+      
       sprite.border = true;
     }
-    if (sprite.y + h / 2 > canvasEl.height) {
-      sprite.y = canvasEl.height - h / 2;
+    if (sprite.y + h / 2 >= canvasEl.height) {
+      if (sprite.doStopAtBorder) {sprite.y = canvasEl.height - h / 2;}
+      
       sprite.border = true;
     }
 
