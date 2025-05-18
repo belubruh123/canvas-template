@@ -721,7 +721,57 @@ class Sprite extends Drawable {
   setColor(color) {
     this.color = color;
   }
+
+  /**
+   * Checks if the sprite is touching a specific color on the canvas.
+   * @param {Object} targetColor - The target color to detect, with r, g, b, and a properties.
+   * @param {number} [tolerance=0] - Optional tolerance for color matching.
+   * @returns {boolean} True if the sprite is touching the target color.
+   */
+  isTouchingColor(targetColor, tolerance = 0) {
+  const { width, height } = this.getCollisionSize();
+  const left = Math.floor(this.x - width / 2);
+  const top = Math.floor(this.y - height / 2);
+  const right = Math.floor(this.x + width / 2);
+  const bottom = Math.floor(this.y + height / 2);
+
+  // Offsets for outline (top, bottom, left, right edges just outside)
+  const edgeOffsets = [
+    { xStart: left - 1, yStart: top, xEnd: left, yEnd: bottom },       // Left edge
+    { xStart: right, yStart: top, xEnd: right + 1, yEnd: bottom },     // Right edge
+    { xStart: left, yStart: top - 1, xEnd: right, yEnd: top },         // Top edge
+    { xStart: left, yStart: bottom, xEnd: right, yEnd: bottom + 1 },   // Bottom edge
+  ];
+
+  for (const edge of edgeOffsets) {
+    const width = edge.xEnd - edge.xStart;
+    const height = edge.yEnd - edge.yStart;
+    const imageData = ctx.getImageData(edge.xStart, edge.yStart, width, height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+
+      if (
+        Math.abs(r - targetColor.r) <= tolerance &&
+        Math.abs(g - targetColor.g) <= tolerance &&
+        Math.abs(b - targetColor.b) <= tolerance &&
+        Math.abs(a - targetColor.a) <= tolerance
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
+
+}
+
+
 
 /**
  * Creates text objects to display on the canvas.
