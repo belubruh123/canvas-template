@@ -1,15 +1,17 @@
+
+
 /* =================================================================
-   0.7-Ultimate – comprehensive smoke test
+   0.8-Ultimate – comprehensive smoke test
    ============================================================== */
 
     /* ---------- 1. global helpers ---------- */
     debug = true;           // turn on hover read-outs
     setBackground();        // clear any previous backdrop
-    console.log("Library version", 0.7);
+    console.log("Library version", 0.8);
   
     /* ---------- 2. text & UI ---------- */
     const titleTxt = createText(canvaX/2, 40, "yellow",
-        "⚙️ 0.7-Ultimate – All-features test", "28px monospace", true);
+        "⚙️ 0.8 – All-features test", "28px monospace", true);
   
     const infoTxt  = createText(10, canvaY-10, "#ccc", "…", "16px monospace");
   
@@ -118,3 +120,4 @@
         `xy(${player.x|0},${player.y|0})  border:${player.border}  `+
         `ground:${player.isOnGround()}`;
     });
+

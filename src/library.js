@@ -1,11 +1,102 @@
 /**
  * @file The Best Engine Ever!
  *
- * @version 0.7-Ultimate
+ * @version 0.8-Portable
  * @author Jeremy Lin
  * @copyright 2025
  */
 
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Create and insert the style
+  const style = document.createElement('style');
+  style.textContent = `
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      background: rgb(255, 255, 255);
+    }
+    #canvasContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+      background: rgb(32, 32, 32);
+    }
+    #canvasEl {
+      border: 1px solid white;
+      border-radius: 10px;
+    }
+    #mousePos {
+      position: absolute;
+      top: 5px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      font-size: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    #hoverInfo {
+      position: absolute;
+      top: 40px;
+      left: 10px;
+      color: #00ffcc;
+      font-family: monospace;
+      font-size: 13px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 10px;
+      border-radius: 4px;
+      white-space: pre-line;
+      display: none;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Create mouse position display
+  const mousePos = document.createElement('div');
+  mousePos.id = 'mousePos';
+  mousePos.textContent = 'x: 0, y: 0';
+  document.body.appendChild(mousePos);
+
+  // Create canvas container
+  const canvasContainer = document.createElement('div');
+  canvasContainer.id = 'canvasContainer';
+  document.body.appendChild(canvasContainer);
+
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  canvas.id = 'canvasEl';
+  canvasContainer.appendChild(canvas);
+
+  // Create hidden input template
+  const input = document.createElement('input');
+  input.id = 'typeboxTemplate';
+  input.type = 'text';
+  input.style.position = 'absolute';
+  input.style.border = 'none';
+  input.style.borderRadius = '8px';
+  input.style.padding = '8px 12px';
+  input.style.background = '#000';
+  input.style.color = '#fff';
+  input.style.font = '20px monospace';
+  input.style.outline = 'none';
+  input.style.display = 'none';
+  canvasContainer.appendChild(input);
+
+  // Create hover info box
+  const hoverInfo = document.createElement('div');
+  hoverInfo.id = 'hoverInfo';
+  document.body.appendChild(hoverInfo);
+});
+
+window.addEventListener('DOMContentLoaded', () => {
 /** @type {boolean} Enables debug mode to show mouse position and hover info */
 let debug = true;
 
@@ -1657,3 +1748,5 @@ canvasEl.addEventListener("contextmenu", (e) => e.preventDefault());
 setTimeout(() => {
   LibraryLoopMGB();
 }, 0);
+
+});
