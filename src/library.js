@@ -155,6 +155,8 @@ class Sprite extends Drawable {
     this.useOriginalSize = true;
     /** @type {number} Scaling factor for size */
     this.scale = 1.0;
+    /** @type {number} Opacity for rendering (0.0-1.0) */
+    this.opacity = 1.0;
     /** @type {Object|null} Control scheme for movement */
     this.controls = null;
     /** @type {number} Gravity effect in pixels per frame */
@@ -437,6 +439,22 @@ class Sprite extends Drawable {
   }
 
   /**
+   * Sets the sprite opacity.
+   * @param {number} alpha - Value between 0 and 1.
+   */
+  setOpacity(alpha) {
+    this.opacity = Math.max(0, Math.min(1, alpha));
+  }
+
+  /**
+   * Changes the sprite opacity by a delta.
+   * @param {number} delta - Amount to add to current opacity.
+   */
+  changeOpacityBy(delta) {
+    this.setOpacity(this.opacity + delta);
+  }
+
+  /**
    * Set the size(for no-image costume only!) of the sprite.
    *
    * @param {*} size - The size you want to set for your sprite.
@@ -622,6 +640,7 @@ class Sprite extends Drawable {
     if (this.hidden) return;
 
     ctx.save();
+    ctx.globalAlpha = this.opacity;
     ctx.translate(this.x, this.y); // move origin to sprite centre
     ctx.rotate(((this.direction - 90) * Math.PI) / 180); // Scratch’s 90°‑right → canvas 0°‑right
     // subtract 90 so 0° points up
