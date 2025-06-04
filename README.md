@@ -69,6 +69,7 @@ A lot! The engine includes:
 - Easy sprite creation
 - Movement and animation support (```sprite.XBy(1)``` or ```sprite.setX(1)```...etc)
 - Event handling (mouse, keyboard, etc.)
+- Sprite opacity control with `setOpacity()`
 - Scene and object management
 - And more!
 

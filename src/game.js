@@ -29,6 +29,7 @@
     player.startDrawing();       // leave a pen trail
     player.penColor = "cyan";
     player.penThickness = 2;
+    player.setOpacity(0.8);
   
     //   ground platform
     const ground = createSprite(canvaX/2, canvaY-30, "#654321");
