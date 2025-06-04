@@ -473,7 +473,7 @@ class Sprite extends Drawable {
    * @memberof Sprite
    */
   setGravity(gravity) {
-    this.hitbox = hitbox;
+    this.gravity = gravity;
   }
 
   /**
